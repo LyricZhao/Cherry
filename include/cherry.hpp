@@ -6,13 +6,14 @@
 #include <ostream>
 #include <random>
 #include <string>
+#include <type_traits>
 
 /// A nanosecond-level timer
 class Timer {
-    typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> NanoTimePoint;
+    typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> time_point_t;
 
 private:
-    NanoTimePoint last_time_point;
+    time_point_t last_time_point;
 
 public:
     Timer() {
@@ -21,7 +22,7 @@ public:
 
     /// Return the duration from last time point (constructor `Timer()` or `tik()`)
     uint64_t tik() {
-        NanoTimePoint time_point = std::chrono::system_clock::now();
+        time_point_t time_point = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time_point - last_time_point);
         last_time_point = time_point;
         return duration.count();
@@ -30,162 +31,212 @@ public:
 
 
 /// A random number generator
-template <typename T>
+template <typename value_type>
 class Random {
 private:
+    typedef typename std::conditional<std::is_integral<value_type>::value,
+            std::uniform_int_distribution<value_type>, std::uniform_real_distribution<value_type>>::type dist_t;
+
     std::default_random_engine engine;
-    std::uniform_int_distribution<T> dist;
+    dist_t dist;
 
 public:
-    Random(T min, T max, int seed=0) {
-        assert(min < max);
+    /// The interval is closed ([`min`, `max`])
+    Random(value_type min, value_type max, int seed=0, bool pure=true) {
+        assert(min <= max);
+        if (pure) {
+            std::random_device rd;
+            seed = rd();
+        }
         engine = std::default_random_engine(seed);
-        dist = std::uniform_int_distribution<T>(min, max - 1);
+        dist = dist_t(min, max);
     }
 
     /// Generate a random number
-    T operator () () {
+    value_type operator () () {
         return dist(engine);
     }
 };
 
 
-/// An iterator which can begin from a certain position for `std::vector`
-template <typename T>
-struct VectorIterator {
-    int pos;
-    std::vector<T> &items;
+// TODO: Add `reverse_iterator` and `operator --` for all iterator types
+// TODO: support enumerate with index
 
-    explicit VectorIterator(std::vector<T> &items, int pos=0): items(items), pos(pos) { }
+/// A range which can begin from a certain position for the type with `begin()` and `end()` methods
+template <typename Range>
+struct ShiftRange {
+    typedef typename Range::iterator iterator;
+    typedef typename Range::value_type value_type;
 
-    [[nodiscard]] auto begin() const {
-        return items.begin() + pos;
+    int pos, length;
+    Range &range;
+
+    explicit ShiftRange(Range &range, int pos=0, int length=-1):
+            range(range), pos(pos), length(length) { }
+
+    [[nodiscard]] iterator begin() const {
+        return range.begin() + pos;
     }
 
-    [[nodiscard]] auto end() const {
-        return items.end();
+    [[nodiscard]] iterator end() const {
+        return length == -1 ? range.end() : range.begin() + pos + length;
     }
 };
 
 
-/// A reversed iterator for `std::vector`
-template <typename T>
-struct ReversedVectorIterator {
-    std::vector<T> &items;
+/// Return a range which can iterate from a certain position
+template <typename Range>
+ShiftRange<Range> shift(Range &range, int pos=0, int length=-1) {
+    return ShiftRange(range, pos, length);
+}
 
-    explicit ReversedVectorIterator(std::vector<T> &items): items(items) { }
 
-    [[nodiscard]] auto begin() const {
-        return items.rbegin();
+/// A reverse wrapper for a range
+template <typename Range>
+struct ReversedRange {
+    typedef typename Range::reverse_iterator iterator;
+    typedef typename Range::value_type value_type;
+
+    Range &range;
+
+    explicit ReversedRange(Range &range): range(range) { }
+
+    [[nodiscard]] iterator begin() const {
+        return range.rbegin();
     }
 
-    [[nodiscard]] auto end() const {
-        return items.rend();
+    [[nodiscard]] iterator end() const {
+        return range.rend();
     }
 };
 
 
 /// A function wrapper for `ReversedVectorIterator`
-template <typename T>
-ReversedVectorIterator<T> iterate_reversed(std::vector<T> &items) {
-    return ReversedVectorIterator<T>(items);
+template <typename Range>
+ReversedRange<Range> reversed(Range &range) {
+    return ReversedRange<Range>(range);
 }
 
 
-/// An iterator for an indexing array and corresponding items
-template <typename T>
-struct IndexIterator {
-    int pos;
-    std::vector<int> &indexes;
-    std::vector<T> &items;
+/// A range for an indexing array and corresponding items
+template <typename Array, typename Range>
+struct IndexingRange {
+    typedef typename Range::iterator index_iterator_t;
+    typedef typename Array::value_type value_type;
 
-    IndexIterator(std::vector<int> &indexes, std::vector<T> &items):
-            indexes(indexes), items(items) {
-        pos = 0;
-    }
+    Array &items;
+    Range &indexes;
 
-    IndexIterator(std::vector<int> &indexes, std::vector<T> &items, int pos):
-            indexes(indexes), items(items), pos(pos) { }
+    IndexingRange(Array &items, Range &indexes):
+            items(items), indexes(indexes) { }
 
-    T& operator * () const {
-        return items[indexes[pos]];
-    }
+    /// The iterator type for `IndexRange`
+    struct iterator {
+        Array &items;
+        index_iterator_t index_iterator;
 
-    IndexIterator operator ++ () {
-        pos ++;
-        return *this;
-    }
+        iterator(Array &items, const index_iterator_t &index_iterator): items(items), index_iterator(index_iterator) { }
 
-    bool operator != (const IndexIterator &other) const {
-        return pos != other.pos;
-    }
-
-    [[nodiscard]] IndexIterator begin() const {
-        return IndexIterator(indexes, items);
-    }
-
-    [[nodiscard]] IndexIterator end() const {
-        return IndexIterator(indexes, items, indexes.size());
-    }
-
-    /// Extract the items by indexes to `std::vector`
-    std::vector<T> to_vector() const {
-        std::vector<T> vector;
-        vector.reserve(indexes.size());
-        for (auto &item: IndexIterator<T>(indexes, items)) {
-            vector.push_back(item);
+        value_type& operator * () const {
+            return items[*index_iterator];
         }
-        return vector;
+
+        iterator operator ++ () {
+            index_iterator ++;
+            return *this;
+        }
+
+        bool operator != (const iterator &other) const {
+            return index_iterator != other.index_iterator;
+        }
+    };
+
+    [[nodiscard]] iterator begin() const {
+        return iterator(items, indexes.begin());
+    }
+
+    [[nodiscard]] iterator end() const {
+        return iterator(items, indexes.end());
     }
 };
 
 
-/// A reversed iterator for an indexing array and corresponding items
-template <typename T>
-struct ReversedIndexIterator {
-    int pos;
-    std::vector<int> &indexes;
-    std::vector<T> &items;
+/// Return a range which can iterate over the corresponding items by the indexing array
+template <typename Array, typename Range>
+IndexingRange<Array, Range> indexing(Array &array, Range &indexes) {
+    return IndexingRange<Array, Range>(array, indexes);
+}
 
-    ReversedIndexIterator(std::vector<int> &indexes, std::vector<T> &items):
-            indexes(indexes), items(items) {
-        pos = items.size() - 1;
-    }
 
-    ReversedIndexIterator(std::vector<int> &indexes, std::vector<T> &items, int pos):
-            indexes(indexes), items(items), pos(pos) { }
+/// A joined range for two ranges
+template <typename Range1, typename Range2, typename T = typename Range1::value_type>
+struct JoinedRange {
+    typedef typename Range1::iterator iterator1_t;
+    typedef typename Range2::iterator iterator2_t;
+    typedef typename Range1::value_type value_type;
 
-    T& operator * () const {
-        return items[indexes[pos]];
-    }
+    // Check whether they're the same type
+    static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
+            "The types of two ranges in JoinedRange must be same");
+    
+    /// The iterator type for `JoinedRange`
+    struct iterator {
+        bool first;
+        iterator1_t iterator1, iterator1_end;
+        iterator2_t iterator2;
 
-    ReversedIndexIterator operator ++ () {
-        pos --;
-        return *this;
-    }
+        iterator(bool first, const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
+                first(first), iterator1(iterator1), iterator1_end(iterator1_end), iterator2(iterator2) { }
 
-    bool operator != (const ReversedIndexIterator &other) const {
-        return pos != other.pos;
-    }
-
-    [[nodiscard]] ReversedIndexIterator begin() const {
-        return ReversedIndexIterator(indexes, items);
-    }
-
-    [[nodiscard]] ReversedIndexIterator end() const {
-        return ReversedIndexIterator(indexes, items, -1);
-    }
-
-    /// Extract the items by reversed indexes to `std::vector`
-    std::vector<T> to_vector() const {
-        std::vector<T> vector;
-        vector.reserve(indexes.size());
-        for (auto &item: ReversedVectorIterator<T>(indexes, items)) {
-            vector.push_back(item);
+        iterator(const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
+                iterator1(iterator1), iterator1_end(iterator1_end), iterator2(iterator2) {
+            first = iterator1 != iterator1_end;
         }
-        return vector;
+
+        T& operator * () const {
+            return first ? *iterator1 : *iterator2;
+        }
+
+        iterator operator ++ () {
+            if (first) {
+                iterator1 ++;
+                if (iterator1 == iterator1_end) {
+                    first = false;
+                }
+            } else {
+                iterator2 ++;
+            }
+            return *this;
+        }
+
+        bool operator != (const iterator &other) const {
+            if (first == other.first) {
+                return first ? iterator1 != other.iterator1 : iterator2 != other.iterator2;
+            }
+            return true;
+        }
+    };
+
+    Range1 &range1;
+    Range2 &range2;
+
+    JoinedRange(Range1 &range1, Range2 &range2): range1(range1), range2(range2) { }
+
+    [[nodiscard]] iterator begin() const {
+        return iterator(range1.begin(), range1.end(), range2.begin());
+    }
+
+    [[nodiscard]] iterator end() const {
+        return iterator(false, range1.end(), range1.end(), range2.end());
     }
 };
+
+
+/// Join two single pass ranges (something has `begin()` and `end()` methods)
+template <typename Range1, typename Range2>
+JoinedRange<Range1, Range2> join(Range1 &range1, Range2 &range2) {
+    return JoinedRange<Range1, Range2>(range1, range2);
+}
 
 
 /// Convert a number to `std::string` with units
@@ -208,6 +259,7 @@ std::string prettyBytes(size_t size) {
     static const char* units[5] = {"B", "KiB", "MiB", "GiB"};
     return pretty<size_t>(size, 1024, units, 4);
 }
+
 
 /// Convert a nanosecond to `std::string` with units (always millisecond if `fixed` is true)
 std::string prettyNanoseconds(uint64_t duration, bool fixed=true) {
@@ -234,6 +286,12 @@ public:
     static constexpr const char *blue   = "\033[34m";
     static constexpr const char *white  = "\033[37m";
 };
+
+
+/// An unimplemented error raiser
+#define unimplemented() \
+    std::cerr << "Unimplemented part at line " << __LINE__ << " in file " << __FILE__ << std::endl; \
+    std::exit(EXIT_FAILURE);
 
 
 /// Size and time units' helper

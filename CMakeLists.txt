@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 project(Cherry)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # Install GoogleTest
 include(FetchContent)
@@ -22,5 +22,6 @@ endif()
 include_directories(include)
 
 # Add tests
+enable_testing()
 add_executable(test_all tests/test_all.cpp)
 target_link_libraries(test_all gtest gtest_main)
