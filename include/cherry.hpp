@@ -64,13 +64,15 @@ public:
 
 /// A range which can begin from a certain position for the type with `begin()` and `end()` methods
 template <typename Range>
-struct ShiftRange {
+class ShiftRange {
+private:
+    int pos, length = -1;
+    Range &range;
+
+public:
     typedef typename Range::iterator iterator;
     typedef typename Range::reverse_iterator reverse_iterator;
     typedef typename Range::value_type value_type;
-
-    int pos, length = -1;
-    Range &range;
 
     explicit ShiftRange(Range &range, int pos=0, int length=-1): range(range), pos(pos) {
         this->length = length == -1 ? range.end() - range.begin() - pos : length;
@@ -113,12 +115,14 @@ ShiftRange<Range> shift(Range &&range, int pos=0, int length=-1) {
 
 /// A reverse wrapper for a range
 template <typename Range>
-struct ReversedRange {
+class ReversedRange {
+private:
+    Range &range;
+
+public:
     typedef typename Range::reverse_iterator iterator;
     typedef typename Range::iterator reverse_iterator;
     typedef typename Range::value_type value_type;
-
-    Range &range;
 
     explicit ReversedRange(Range &range): range(range) { }
 
@@ -156,7 +160,12 @@ ReversedRange<Range> reverse(Range &&range) {
 
 /// A range for an indexing array and corresponding items
 template <typename Array, typename Range>
-struct IndexingRange {
+class IndexingRange {
+private:
+    Array &items;
+    Range &indexes;
+
+public:
     typedef typename Array::value_type value_type;
 
     /// The iterator type for `IndexRange`
@@ -187,9 +196,6 @@ struct IndexingRange {
 
     typedef Iterator<typename Range::iterator> iterator;
     typedef Iterator<typename Range::reverse_iterator> reverse_iterator;
-
-    Array &items;
-    Range &indexes;
 
     IndexingRange(Array &items, Range &indexes):
             items(items), indexes(indexes) { }
@@ -242,7 +248,12 @@ IndexingRange<Array, Range> indexing(Array &&array, Range &&indexes) {
 
 /// A joined range for two ranges
 template <typename Range1, typename Range2, typename T = typename Range1::value_type>
-struct JoinedRange {
+class JoinedRange {
+private:
+    Range1 &range1;
+    Range2 &range2;
+
+public:
     // Check whether they're the same type
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
             "The types of two ranges in JoinedRange must be same");
@@ -296,9 +307,6 @@ struct JoinedRange {
 
     typedef Iterator<typename Range1::iterator, typename Range2::iterator> iterator;
     typedef Iterator<typename Range2::reverse_iterator, typename Range1::reverse_iterator> reverse_iterator;
-
-    Range1 &range1;
-    Range2 &range2;
 
     JoinedRange(Range1 &range1, Range2 &range2): range1(range1), range2(range2) { }
 
