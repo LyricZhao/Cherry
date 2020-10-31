@@ -142,14 +142,14 @@ struct ReversedRange {
 
 /// A function wrapper for `ReversedVectorIterator`
 template <typename Range>
-ReversedRange<Range> reversed(Range &range) {
+ReversedRange<Range> reverse(Range &range) {
     return ReversedRange<Range>(range);
 }
 
 
 /// A function wrapper for `ReversedVectorIterator`
 template <typename Range>
-ReversedRange<Range> reversed(Range &&range) {
+ReversedRange<Range> reverse(Range &&range) {
     return ReversedRange<Range>(range);
 }
 

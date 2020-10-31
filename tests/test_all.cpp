@@ -72,17 +72,17 @@ TEST(Cherry, ReversedRange) {
     for (auto &value: vec) {
         value = index ++;
     }
-    for (auto &value: reversed(vec)) {
+    for (auto &value: reverse(vec)) {
         ASSERT_EQ(value, -- index);
     }
 
     // Combine with `ShiftRange`
     index = 10;
-    for (auto &value: reversed(shift(vec, 5))) {
+    for (auto &value: reverse(shift(vec, 5))) {
         ASSERT_EQ(value, -- index);
         value = 0;
     }
-    for (auto &value: shift(reversed(vec), 0, 5)) {
+    for (auto &value: shift(reverse(vec), 0, 5)) {
         ASSERT_EQ(value, 0);
     }
 }
@@ -106,11 +106,11 @@ TEST(Cherry, IndexingRange) {
     }
 
     // Combine with `ReversedRange`
-    for (auto &value: reversed(indexing(values, indexes))) {
+    for (auto &value: reverse(indexing(values, indexes))) {
         ASSERT_EQ(value, index ++);
         value = 0;
     }
-    for (auto &value: reversed(indexing(values, indexes))) {
+    for (auto &value: reverse(indexing(values, indexes))) {
         ASSERT_EQ(value, 0);
     }
 }
@@ -150,7 +150,7 @@ TEST(Cherry, JoinedIterator) {
 
     // Combine with `ReversedRange`
     index = 0;
-    for (auto &value: join(join(vec1, reversed(vec2)), vec3)) {
+    for (auto &value: join(join(vec1, reverse(vec2)), vec3)) {
         value = index ++;
     }
     index = 20;
