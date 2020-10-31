@@ -59,27 +59,40 @@ public:
 };
 
 
-// TODO: Add `reverse_iterator` and `operator --` for all iterator types
+// TODO: support std-like iterators (like iterator tags)
 // TODO: support enumerate with index
 
 /// A range which can begin from a certain position for the type with `begin()` and `end()` methods
 template <typename Range>
 struct ShiftRange {
     typedef typename Range::iterator iterator;
+    typedef typename Range::reverse_iterator reverse_iterator;
     typedef typename Range::value_type value_type;
 
-    int pos, length;
+    int pos, length = -1;
     Range &range;
 
-    explicit ShiftRange(Range &range, int pos=0, int length=-1):
-            range(range), pos(pos), length(length) { }
+    explicit ShiftRange(Range &range, int pos=0, int length=-1): range(range), pos(pos) {
+        this->length = length == -1 ? range.end() - range.begin() - pos : length;
+        assert(pos + this->length <= range.end() - range.begin());
+    }
 
     [[nodiscard]] iterator begin() const {
         return range.begin() + pos;
     }
 
     [[nodiscard]] iterator end() const {
-        return length == -1 ? range.end() : range.begin() + pos + length;
+        return range.begin() + pos + length;
+    }
+
+    [[nodiscard]] reverse_iterator rbegin() const {
+        auto cut = range.end() - range.begin() - (pos + length);
+        return range.rbegin() + cut;
+    }
+
+    [[nodiscard]] reverse_iterator rend() const {
+        auto cut = range.end() - range.begin() - pos;
+        return range.rbegin() + cut;
     }
 };
 
@@ -91,10 +104,18 @@ ShiftRange<Range> shift(Range &range, int pos=0, int length=-1) {
 }
 
 
+/// Return a range which can iterate from a certain position
+template <typename Range>
+ShiftRange<Range> shift(Range &&range, int pos=0, int length=-1) {
+    return ShiftRange(range, pos, length);
+}
+
+
 /// A reverse wrapper for a range
 template <typename Range>
 struct ReversedRange {
     typedef typename Range::reverse_iterator iterator;
+    typedef typename Range::iterator reverse_iterator;
     typedef typename Range::value_type value_type;
 
     Range &range;
@@ -108,6 +129,14 @@ struct ReversedRange {
     [[nodiscard]] iterator end() const {
         return range.rend();
     }
+
+    [[nodiscard]] reverse_iterator rbegin() const {
+        return range.begin();
+    }
+
+    [[nodiscard]] reverse_iterator rend() const {
+        return range.end();
+    }
 };
 
 
@@ -118,11 +147,46 @@ ReversedRange<Range> reversed(Range &range) {
 }
 
 
+/// A function wrapper for `ReversedVectorIterator`
+template <typename Range>
+ReversedRange<Range> reversed(Range &&range) {
+    return ReversedRange<Range>(range);
+}
+
+
 /// A range for an indexing array and corresponding items
 template <typename Array, typename Range>
 struct IndexingRange {
-    typedef typename Range::iterator index_iterator_t;
     typedef typename Array::value_type value_type;
+
+    /// The iterator type for `IndexRange`
+    template<typename index_iterator_t>
+    struct Iterator {
+        Array &items;
+        index_iterator_t index_iterator;
+
+        Iterator(Array &items, const index_iterator_t &index_iterator): items(items), index_iterator(index_iterator) { }
+
+        value_type& operator * () const {
+            return items[*index_iterator];
+        }
+
+        Iterator operator ++ () {
+            index_iterator ++;
+            return *this;
+        }
+
+        bool operator == (const Iterator &other) const {
+            return index_iterator == other.index_iterator;
+        }
+
+        bool operator != (const Iterator &other) const {
+            return index_iterator != other.index_iterator;
+        }
+    };
+
+    typedef Iterator<typename Range::iterator> iterator;
+    typedef Iterator<typename Range::reverse_iterator> reverse_iterator;
 
     Array &items;
     Range &indexes;
@@ -130,33 +194,20 @@ struct IndexingRange {
     IndexingRange(Array &items, Range &indexes):
             items(items), indexes(indexes) { }
 
-    /// The iterator type for `IndexRange`
-    struct iterator {
-        Array &items;
-        index_iterator_t index_iterator;
-
-        iterator(Array &items, const index_iterator_t &index_iterator): items(items), index_iterator(index_iterator) { }
-
-        value_type& operator * () const {
-            return items[*index_iterator];
-        }
-
-        iterator operator ++ () {
-            index_iterator ++;
-            return *this;
-        }
-
-        bool operator != (const iterator &other) const {
-            return index_iterator != other.index_iterator;
-        }
-    };
-
     [[nodiscard]] iterator begin() const {
         return iterator(items, indexes.begin());
     }
 
     [[nodiscard]] iterator end() const {
         return iterator(items, indexes.end());
+    }
+
+    [[nodiscard]] reverse_iterator rbegin() const {
+        return reverse_iterator(items, indexes.rbegin());
+    }
+
+    [[nodiscard]] reverse_iterator rend() const {
+        return reverse_iterator(items, indexes.rend());
     }
 };
 
@@ -168,27 +219,46 @@ IndexingRange<Array, Range> indexing(Array &array, Range &indexes) {
 }
 
 
+/// Return a range which can iterate over the corresponding items by the indexing array
+template <typename Array, typename Range>
+IndexingRange<Array, Range> indexing(Array &array, Range &&indexes) {
+    return IndexingRange<Array, Range>(array, indexes);
+}
+
+
+/// Return a range which can iterate over the corresponding items by the indexing array
+template <typename Array, typename Range>
+IndexingRange<Array, Range> indexing(Array &&array, Range &indexes) {
+    return IndexingRange<Array, Range>(array, indexes);
+}
+
+
+/// Return a range which can iterate over the corresponding items by the indexing array
+template <typename Array, typename Range>
+IndexingRange<Array, Range> indexing(Array &&array, Range &&indexes) {
+    return IndexingRange<Array, Range>(array, indexes);
+}
+
+
 /// A joined range for two ranges
 template <typename Range1, typename Range2, typename T = typename Range1::value_type>
 struct JoinedRange {
-    typedef typename Range1::iterator iterator1_t;
-    typedef typename Range2::iterator iterator2_t;
-    typedef typename Range1::value_type value_type;
-
     // Check whether they're the same type
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
             "The types of two ranges in JoinedRange must be same");
+    typedef typename Range1::value_type value_type;
     
     /// The iterator type for `JoinedRange`
-    struct iterator {
+    template <typename iterator1_t, typename iterator2_t>
+    struct Iterator {
         bool first;
         iterator1_t iterator1, iterator1_end;
         iterator2_t iterator2;
 
-        iterator(bool first, const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
+        Iterator(bool first, const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
                 first(first), iterator1(iterator1), iterator1_end(iterator1_end), iterator2(iterator2) { }
 
-        iterator(const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
+        Iterator(const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
                 iterator1(iterator1), iterator1_end(iterator1_end), iterator2(iterator2) {
             first = iterator1 != iterator1_end;
         }
@@ -197,25 +267,35 @@ struct JoinedRange {
             return first ? *iterator1 : *iterator2;
         }
 
-        iterator operator ++ () {
+        Iterator operator ++ () {
             if (first) {
-                iterator1 ++;
+                ++ iterator1;
                 if (iterator1 == iterator1_end) {
                     first = false;
                 }
             } else {
-                iterator2 ++;
+                ++ iterator2;
             }
             return *this;
         }
 
-        bool operator != (const iterator &other) const {
+        bool operator == (const Iterator &other) const {
+            if (first != other.first) {
+                return false;
+            }
+            return first ? iterator1 == other.iterator1 : iterator2 == other.iterator2;
+        }
+
+        bool operator != (const Iterator &other) const {
             if (first == other.first) {
                 return first ? iterator1 != other.iterator1 : iterator2 != other.iterator2;
             }
             return true;
         }
     };
+
+    typedef Iterator<typename Range1::iterator, typename Range2::iterator> iterator;
+    typedef Iterator<typename Range2::reverse_iterator, typename Range1::reverse_iterator> reverse_iterator;
 
     Range1 &range1;
     Range2 &range2;
@@ -229,12 +309,41 @@ struct JoinedRange {
     [[nodiscard]] iterator end() const {
         return iterator(false, range1.end(), range1.end(), range2.end());
     }
+
+    [[nodiscard]] reverse_iterator rbegin() const {
+        return iterator(range2.rbegin(), range2.rend(), range1.rbegin());
+    }
+
+    [[nodiscard]] reverse_iterator rend() const {
+        return iterator(false, range2.rend(), range2.rend(), range1.rend());
+    }
 };
 
 
-/// Join two single pass ranges (something has `begin()` and `end()` methods)
+/// Join two ranges
 template <typename Range1, typename Range2>
 JoinedRange<Range1, Range2> join(Range1 &range1, Range2 &range2) {
+    return JoinedRange<Range1, Range2>(range1, range2);
+}
+
+
+/// Join two ranges
+template <typename Range1, typename Range2>
+JoinedRange<Range1, Range2> join(Range1 &range1, Range2 &&range2) {
+    return JoinedRange<Range1, Range2>(range1, range2);
+}
+
+
+/// Join two ranges
+template <typename Range1, typename Range2>
+JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &range2) {
+    return JoinedRange<Range1, Range2>(range1, range2);
+}
+
+
+/// Join two ranges
+template <typename Range1, typename Range2>
+JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &&range2) {
     return JoinedRange<Range1, Range2>(range1, range2);
 }
 

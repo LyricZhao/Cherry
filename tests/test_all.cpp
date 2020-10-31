@@ -75,6 +75,16 @@ TEST(Cherry, ReversedRange) {
     for (auto &value: reversed(vec)) {
         ASSERT_EQ(value, -- index);
     }
+
+    // Combine with `ShiftRange`
+    index = 10;
+    for (auto &value: reversed(shift(vec, 5))) {
+        ASSERT_EQ(value, -- index);
+        value = 0;
+    }
+    for (auto &value: shift(reversed(vec), 0, 5)) {
+        ASSERT_EQ(value, 0);
+    }
 }
 
 
@@ -94,11 +104,21 @@ TEST(Cherry, IndexingRange) {
     for (auto &value: indexing(values, indexes)) {
         ASSERT_EQ(value, -- index);
     }
+
+    // Combine with `ReversedRange`
+    for (auto &value: reversed(indexing(values, indexes))) {
+        ASSERT_EQ(value, index ++);
+        value = 0;
+    }
+    for (auto &value: reversed(indexing(values, indexes))) {
+        ASSERT_EQ(value, 0);
+    }
 }
 
 
 /// Test `JoinedIterator`
 TEST(Cherry, JoinedIterator) {
+    // Assign and check values
     std::vector<int> vec1(10, 0), vec2(10, 1);
     int index = 0;
     for (auto &value: join(vec1, vec2)) {
@@ -112,5 +132,29 @@ TEST(Cherry, JoinedIterator) {
     }
     for (auto &value: join(vec1, vec2)) {
         ASSERT_EQ(value, 2);
+    }
+
+    // Join and join
+    std::vector<int> vec3(10, 0);
+    for (auto &value: join(join(vec1, vec2), vec3)) {
+        value = 3;
+    }
+    auto check = [](const std::vector<int> &vec) {
+        for (auto value: vec) {
+            ASSERT_EQ(value, 3);
+        }
+    };
+    check(vec1);
+    check(vec2);
+    check(vec3);
+
+    // Combine with `ReversedRange`
+    index = 0;
+    for (auto &value: join(join(vec1, reversed(vec2)), vec3)) {
+        value = index ++;
+    }
+    index = 20;
+    for (auto &value: vec2) {
+        ASSERT_EQ(value, -- index);
     }
 }
