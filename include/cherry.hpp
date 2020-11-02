@@ -45,8 +45,7 @@ public:
     Random(value_type min, value_type max, int seed=0, bool pure=true) {
         assert(min <= max);
         if (pure) {
-            std::random_device rd;
-            seed = rd();
+            seed = std::random_device()();
         }
         engine = std::default_random_engine(seed);
         dist = dist_t(min, max);
@@ -124,7 +123,7 @@ public:
     typedef typename Range::iterator reverse_iterator;
     typedef typename Range::value_type value_type;
 
-    explicit ReversedRange(Range &range): range(range) { }
+    explicit ReversedRange(Range &range): range(range) {}
 
     [[nodiscard]] iterator begin() const {
         return range.rbegin();
@@ -174,7 +173,7 @@ public:
         Array &items;
         index_iterator_t index_iterator;
 
-        Iterator(Array &items, const index_iterator_t &index_iterator): items(items), index_iterator(index_iterator) { }
+        Iterator(Array &items, const index_iterator_t &index_iterator): items(items), index_iterator(index_iterator) {}
 
         value_type& operator * () const {
             return items[*index_iterator];
@@ -198,7 +197,7 @@ public:
     typedef Iterator<typename Range::reverse_iterator> reverse_iterator;
 
     IndexingRange(Array &items, Range &indexes):
-            items(items), indexes(indexes) { }
+            items(items), indexes(indexes) {}
 
     [[nodiscard]] iterator begin() const {
         return iterator(items, indexes.begin());
@@ -267,7 +266,7 @@ public:
         iterator2_t iterator2;
 
         Iterator(bool first, const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
-                first(first), iterator1(iterator1), iterator1_end(iterator1_end), iterator2(iterator2) { }
+                first(first), iterator1(iterator1), iterator1_end(iterator1_end), iterator2(iterator2) {}
 
         Iterator(const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
                 iterator1(iterator1), iterator1_end(iterator1_end), iterator2(iterator2) {
@@ -308,7 +307,7 @@ public:
     typedef Iterator<typename Range1::iterator, typename Range2::iterator> iterator;
     typedef Iterator<typename Range2::reverse_iterator, typename Range1::reverse_iterator> reverse_iterator;
 
-    JoinedRange(Range1 &range1, Range2 &range2): range1(range1), range2(range2) { }
+    JoinedRange(Range1 &range1, Range2 &range2): range1(range1), range2(range2) {}
 
     [[nodiscard]] iterator begin() const {
         return iterator(range1.begin(), range1.end(), range2.begin());
@@ -406,9 +405,10 @@ public:
 
 
 /// An unimplemented error raiser
-#define unimplemented() \
+#define unimplemented() { \
     std::cerr << "Unimplemented part at line " << __LINE__ << " in file " << __FILE__ << std::endl; \
-    std::exit(EXIT_FAILURE);
+    std::exit(EXIT_FAILURE); \
+}
 
 
 /// Size and time units' helper
