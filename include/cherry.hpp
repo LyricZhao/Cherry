@@ -58,7 +58,7 @@ public:
 };
 
 
-// TODO: support std-like iterators (like iterator tags)
+// TODO: support `const_iterator` (`&&Range` is really a stupid way)
 // TODO: support enumerate with index
 
 /// A range which can begin from a certain position for the type with `begin()` and `end()` methods
@@ -255,9 +255,9 @@ private:
 public:
     // Check whether they're the same type
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
-            "The types of two ranges in JoinedRange must be same");
+                  "The types of two ranges in JoinedRange must be same");
     typedef typename Range1::value_type value_type;
-    
+
     /// The iterator type for `JoinedRange`
     template <typename iterator1_t, typename iterator2_t>
     struct Iterator {
@@ -352,6 +352,21 @@ JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &range2) {
 template <typename Range1, typename Range2>
 JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &&range2) {
     return JoinedRange<Range1, Range2>(range1, range2);
+}
+
+
+/// Concat two ranges into a `std::vector`
+template <typename Range1, typename Range2, typename value_type = typename Range1::value_type>
+std::vector<value_type> concat(Range1 &range1, Range2 &range2) {
+    static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value);
+    std::vector<value_type> vec;
+    for (auto &value: range1) {
+        vec.push_back(value);
+    }
+    for (auto &value: range2) {
+        vec.push_back(value);
+    }
+    return vec;
 }
 
 
