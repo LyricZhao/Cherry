@@ -61,6 +61,22 @@ TEST(Cherry, ShiftRange) {
     for (auto &value: shift(vec, 5)) {
         ASSERT_EQ(value, 1);
     }
+
+    // `const_iterator`
+    for (const auto &value: shift(vec, 0, 5)) {
+        ASSERT_EQ(value, 0);
+    }
+
+    // `const Range &`
+    const std::vector<int> const_vec(10, 0);
+    for (const auto &value: shift(const_vec, 0, 5)) {
+        ASSERT_EQ(value, 0);
+    }
+
+    // R-value
+    for (const auto &value: shift(shift(vec, 0, 4), 0, 2)) {
+        ASSERT_EQ(value, 0);
+    }
 }
 
 
@@ -72,7 +88,7 @@ TEST(Cherry, ReversedRange) {
     for (auto &value: vec) {
         value = index ++;
     }
-    for (auto &value: reverse(vec)) {
+    for (const auto &value: reverse(vec)) {
         ASSERT_EQ(value, -- index);
     }
 
@@ -83,6 +99,12 @@ TEST(Cherry, ReversedRange) {
         value = 0;
     }
     for (auto &value: shift(reverse(vec), 0, 5)) {
+        ASSERT_EQ(value, 0);
+    }
+
+    // `const Range &`
+    const std::vector<int> const_vec(10, 0);
+    for (const auto &value: reverse(const_vec)) {
         ASSERT_EQ(value, 0);
     }
 }
@@ -111,6 +133,12 @@ TEST(Cherry, IndexingRange) {
         value = 0;
     }
     for (auto &value: reverse(indexing(values, indexes))) {
+        ASSERT_EQ(value, 0);
+    }
+
+    // `const Range &`
+    std::vector<int> const_vec(10, 0);
+    for (const auto &value: reverse(indexing(const_vec, indexes))) {
         ASSERT_EQ(value, 0);
     }
 }
@@ -156,6 +184,13 @@ TEST(Cherry, JoinedIterator) {
     index = 20;
     for (auto &value: vec2) {
         ASSERT_EQ(value, -- index);
+    }
+
+    // const Range &
+    std::vector<int> non_const_vec(10, 0);
+    const std::vector<int> const_vec(10, 0);
+    for (const auto &value: join(non_const_vec, join(non_const_vec, const_vec))) {
+        ASSERT_EQ(value, 0);
     }
 }
 

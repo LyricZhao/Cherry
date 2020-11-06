@@ -58,9 +58,10 @@ public:
     }
 };
 
-
-// TODO: support `const_iterator` (`&&Range` is really a stupid way)
-// TODO: support enumerate with index
+// TODO: Support enumerate with index
+// TODO: The compiler error may not be friendly when forcedly use `iterator` as `const_iterator`
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "readability-const-return-type"
 
 /// A range which can begin from a certain position for the type with `begin()` and `end()` methods
 template <typename Range>
@@ -70,8 +71,10 @@ private:
     Range &range;
 
 public:
-    typedef typename Range::iterator iterator;
-    typedef typename Range::reverse_iterator reverse_iterator;
+    typedef typename std::conditional<std::is_const<Range>::value, typename Range::const_iterator, typename Range::iterator>::type iterator;
+    typedef typename std::conditional<std::is_const<Range>::value, typename Range::const_reverse_iterator, typename Range::reverse_iterator>::type reverse_iterator;
+    typedef typename Range::const_iterator const_iterator;
+    typedef typename Range::const_reverse_iterator const_reverse_iterator;
     typedef typename Range::value_type value_type;
 
     explicit ShiftRange(Range &range, int pos=0, int length=-1): range(range), pos(pos) {
@@ -79,20 +82,38 @@ public:
         assert(pos + this->length <= range.end() - range.begin());
     }
 
-    [[nodiscard]] iterator begin() const {
+    [[nodiscard]] iterator begin() {
         return range.begin() + pos;
     }
 
-    [[nodiscard]] iterator end() const {
+    [[nodiscard]] iterator end() {
         return range.begin() + pos + length;
     }
 
-    [[nodiscard]] reverse_iterator rbegin() const {
+    [[nodiscard]] reverse_iterator rbegin() {
         auto cut = range.end() - range.begin() - (pos + length);
         return range.rbegin() + cut;
     }
 
-    [[nodiscard]] reverse_iterator rend() const {
+    [[nodiscard]] reverse_iterator rend() {
+        auto cut = range.end() - range.begin() - pos;
+        return range.rbegin() + cut;
+    }
+
+    [[nodiscard]] const_iterator begin() const {
+        return range.begin() + pos;
+    }
+
+    [[nodiscard]] const_iterator end() const {
+        return range.begin() + pos + length;
+    }
+
+    [[nodiscard]] const_reverse_iterator rbegin() const {
+        auto cut = range.end() - range.begin() - (pos + length);
+        return range.rbegin() + cut;
+    }
+
+    [[nodiscard]] const_reverse_iterator rend() const {
         auto cut = range.end() - range.begin() - pos;
         return range.rbegin() + cut;
     }
@@ -108,8 +129,8 @@ ShiftRange<Range> shift(Range &range, int pos=0, int length=-1) {
 
 /// Return a range which can iterate from a certain position
 template <typename Range>
-ShiftRange<Range> shift(Range &&range, int pos=0, int length=-1) {
-    return ShiftRange(range, pos, length);
+const ShiftRange<const Range> shift(const Range &range, int pos=0, int length=-1) {
+    return ShiftRange<const Range>(range, pos, length);
 }
 
 
@@ -120,41 +141,66 @@ private:
     Range &range;
 
 public:
-    typedef typename Range::reverse_iterator iterator;
-    typedef typename Range::iterator reverse_iterator;
+    typedef typename std::conditional<std::is_const<Range>::value, typename Range::const_reverse_iterator, typename Range::reverse_iterator>::type iterator;
+    typedef typename std::conditional<std::is_const<Range>::value, typename Range::const_iterator, typename Range::iterator>::type reverse_iterator;
+    typedef typename Range::const_reverse_iterator const_iterator;
+    typedef typename Range::const_iterator const_reverse_iterator;
     typedef typename Range::value_type value_type;
 
     explicit ReversedRange(Range &range): range(range) {}
 
-    [[nodiscard]] iterator begin() const {
+    [[nodiscard]] iterator begin() {
         return range.rbegin();
     }
 
-    [[nodiscard]] iterator end() const {
+    [[nodiscard]] iterator end() {
         return range.rend();
     }
 
-    [[nodiscard]] reverse_iterator rbegin() const {
+    [[nodiscard]] reverse_iterator rbegin() {
         return range.begin();
     }
 
-    [[nodiscard]] reverse_iterator rend() const {
+    [[nodiscard]] reverse_iterator rend() {
+        return range.end();
+    }
+
+    [[nodiscard]] const_iterator begin() const {
+        return range.rbegin();
+    }
+
+    [[nodiscard]] const_iterator end() const {
+        return range.rend();
+    }
+
+    [[nodiscard]] const_reverse_iterator rbegin() const {
+        return range.begin();
+    }
+
+    [[nodiscard]] const_reverse_iterator rend() const {
         return range.end();
     }
 };
 
 
-/// A function wrapper for `ReversedVectorIterator`
+/// A function wrapper for `ReversedRange`
 template <typename Range>
 ReversedRange<Range> reverse(Range &range) {
     return ReversedRange<Range>(range);
 }
 
 
-/// A function wrapper for `ReversedVectorIterator`
+/// A function wrapper for `ReversedRange`
 template <typename Range>
 ReversedRange<Range> reverse(Range &&range) {
     return ReversedRange<Range>(range);
+}
+
+
+/// A function wrapper for `ReversedRange`
+template <typename Range>
+const ReversedRange<const Range> reverse(const Range &range) {
+    return ReversedRange<const Range>(range);
 }
 
 
@@ -163,91 +209,96 @@ template <typename Array, typename Range>
 class IndexingRange {
 private:
     Array &items;
-    Range &indexes;
+    const Range &indexes;
 
 public:
     typedef typename Array::value_type value_type;
+    typedef typename std::conditional<std::is_const<Array>::value, const typename Array::value_type&, typename Array::value_type&>::type reference;
 
     /// The iterator type for `IndexRange`
-    template<typename index_iterator_t>
+    template<typename index_const_iterator_t>
     struct Iterator {
         Array &items;
-        index_iterator_t index_iterator;
+        index_const_iterator_t index_const_iterator;
 
-        Iterator(Array &items, const index_iterator_t &index_iterator): items(items), index_iterator(index_iterator) {}
+        Iterator(Array &items, const index_const_iterator_t &index_const_iterator): items(items), index_const_iterator(index_const_iterator) {}
 
-        value_type& operator * () const {
-            return items[*index_iterator];
+        reference operator * () const {
+            return items[*index_const_iterator];
         }
 
         Iterator operator ++ () {
-            index_iterator ++;
+            index_const_iterator ++;
             return *this;
         }
 
         bool operator == (const Iterator &other) const {
-            return index_iterator == other.index_iterator;
+            return index_const_iterator == other.index_const_iterator;
         }
 
         bool operator != (const Iterator &other) const {
-            return index_iterator != other.index_iterator;
+            return index_const_iterator != other.index_const_iterator;
         }
     };
 
-    typedef Iterator<typename Range::iterator> iterator;
-    typedef Iterator<typename Range::reverse_iterator> reverse_iterator;
+    typedef Iterator<typename Range::const_iterator> iterator;
+    typedef Iterator<typename Range::const_reverse_iterator> reverse_iterator;
+    typedef Iterator<typename Range::const_iterator> const_iterator;
+    typedef Iterator<typename Range::const_reverse_iterator> const_reverse_iterator;
 
-    IndexingRange(Array &items, Range &indexes):
+    IndexingRange(Array &items, const Range &indexes):
             items(items), indexes(indexes) {}
 
-    [[nodiscard]] iterator begin() const {
+    [[nodiscard]] iterator begin() {
         return iterator(items, indexes.begin());
     }
 
-    [[nodiscard]] iterator end() const {
+    [[nodiscard]] iterator end() {
         return iterator(items, indexes.end());
     }
 
-    [[nodiscard]] reverse_iterator rbegin() const {
+    [[nodiscard]] reverse_iterator rbegin() {
         return reverse_iterator(items, indexes.rbegin());
     }
 
-    [[nodiscard]] reverse_iterator rend() const {
+    [[nodiscard]] reverse_iterator rend() {
         return reverse_iterator(items, indexes.rend());
+    }
+
+    [[nodiscard]] const_iterator begin() const {
+        return const_iterator(items, indexes.begin());
+    }
+
+    [[nodiscard]] const_iterator end() const {
+        return const_iterator(items, indexes.end());
+    }
+
+    [[nodiscard]] const_reverse_iterator rbegin() const {
+        return const_reverse_iterator(items, indexes.rbegin());
+    }
+
+    [[nodiscard]] const_reverse_iterator rend() const {
+        return const_reverse_iterator(items, indexes.rend());
     }
 };
 
 
 /// Return a range which can iterate over the corresponding items by the indexing array
 template <typename Array, typename Range>
-IndexingRange<Array, Range> indexing(Array &array, Range &indexes) {
+IndexingRange<Array, Range> indexing(Array &array, const Range &indexes) {
     return IndexingRange<Array, Range>(array, indexes);
 }
 
 
 /// Return a range which can iterate over the corresponding items by the indexing array
 template <typename Array, typename Range>
-IndexingRange<Array, Range> indexing(Array &array, Range &&indexes) {
-    return IndexingRange<Array, Range>(array, indexes);
-}
-
-
-/// Return a range which can iterate over the corresponding items by the indexing array
-template <typename Array, typename Range>
-IndexingRange<Array, Range> indexing(Array &&array, Range &indexes) {
-    return IndexingRange<Array, Range>(array, indexes);
-}
-
-
-/// Return a range which can iterate over the corresponding items by the indexing array
-template <typename Array, typename Range>
-IndexingRange<Array, Range> indexing(Array &&array, Range &&indexes) {
-    return IndexingRange<Array, Range>(array, indexes);
+const IndexingRange<const Array, Range> indexing(const Array &array, const Range &indexes) {
+    return IndexingRange<const Array, Range>(array, indexes);
 }
 
 
 /// A joined range for two ranges
-template <typename Range1, typename Range2, typename T = typename Range1::value_type>
+template <typename Range1, typename Range2>
 class JoinedRange {
 private:
     Range1 &range1;
@@ -257,7 +308,10 @@ public:
     // Check whether they're the same type
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
                   "The types of two ranges in JoinedRange must be same");
+
+    static constexpr bool be_const = std::is_const<Range1>::value or std::is_const<Range2>::value;
     typedef typename Range1::value_type value_type;
+    typedef typename std::conditional<be_const, const typename Range1::value_type&, typename Range1::value_type&>::type reference;
 
     /// The iterator type for `JoinedRange`
     template <typename iterator1_t, typename iterator2_t>
@@ -274,7 +328,7 @@ public:
             first = iterator1 != iterator1_end;
         }
 
-        T& operator * () const {
+        reference operator * () const {
             return first ? *iterator1 : *iterator2;
         }
 
@@ -305,28 +359,49 @@ public:
         }
     };
 
-    typedef Iterator<typename Range1::iterator, typename Range2::iterator> iterator;
-    typedef Iterator<typename Range2::reverse_iterator, typename Range1::reverse_iterator> reverse_iterator;
+    typedef typename std::conditional<be_const,
+            Iterator<typename Range1::const_iterator, typename Range2::const_iterator>,
+            Iterator<typename Range1::iterator, typename Range2::iterator>>::type iterator;
+    typedef typename std::conditional<be_const,
+            Iterator<typename Range1::const_reverse_iterator, typename Range2::const_reverse_iterator>,
+            Iterator<typename Range1::reverse_iterator, typename Range2::reverse_iterator>>::type reverse_iterator;
+    typedef Iterator<typename Range1::const_iterator, typename Range2::const_iterator> const_iterator;
+    typedef Iterator<typename Range2::const_reverse_iterator, typename Range1::const_reverse_iterator> const_reverse_iterator;
 
     JoinedRange(Range1 &range1, Range2 &range2): range1(range1), range2(range2) {}
 
-    [[nodiscard]] iterator begin() const {
+    [[nodiscard]] iterator begin() {
         return iterator(range1.begin(), range1.end(), range2.begin());
     }
 
-    [[nodiscard]] iterator end() const {
+    [[nodiscard]] iterator end() {
         return iterator(false, range1.end(), range1.end(), range2.end());
     }
 
-    [[nodiscard]] reverse_iterator rbegin() const {
-        return iterator(range2.rbegin(), range2.rend(), range1.rbegin());
+    [[nodiscard]] reverse_iterator rbegin() {
+        return reverse_iterator(range2.rbegin(), range2.rend(), range1.rbegin());
     }
 
-    [[nodiscard]] reverse_iterator rend() const {
-        return iterator(false, range2.rend(), range2.rend(), range1.rend());
+    [[nodiscard]] reverse_iterator rend() {
+        return reverse_iterator(false, range2.rend(), range2.rend(), range1.rend());
+    }
+
+    [[nodiscard]] const_iterator begin() const {
+        return const_iterator(range1.begin(), range1.end(), range2.begin());
+    }
+
+    [[nodiscard]] const_iterator end() const {
+        return const_iterator(false, range1.end(), range1.end(), range2.end());
+    }
+
+    [[nodiscard]] const_reverse_iterator rbegin() const {
+        return const_reverse_iterator(range2.rbegin(), range2.rend(), range1.rbegin());
+    }
+
+    [[nodiscard]] const_reverse_iterator rend() const {
+        return const_reverse_iterator(false, range2.rend(), range2.rend(), range1.rend());
     }
 };
-
 
 /// Join two ranges
 template <typename Range1, typename Range2>
@@ -344,6 +419,13 @@ JoinedRange<Range1, Range2> join(Range1 &range1, Range2 &&range2) {
 
 /// Join two ranges
 template <typename Range1, typename Range2>
+const JoinedRange<Range1, const Range2> join(Range1 &range1, const Range2 &range2) {
+    return JoinedRange<Range1, const Range2>(range1, range2);
+}
+
+
+/// Join two ranges
+template <typename Range1, typename Range2>
 JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &range2) {
     return JoinedRange<Range1, Range2>(range1, range2);
 }
@@ -356,19 +438,54 @@ JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &&range2) {
 }
 
 
+/// Join two ranges
+template <typename Range1, typename Range2>
+const JoinedRange<Range1, const Range2> join(Range1 &&range1, const Range2 &range2) {
+    return JoinedRange<Range1, const Range2>(range1, range2);
+}
+
+
+/// Join two ranges
+template <typename Range1, typename Range2>
+const JoinedRange<const Range1, Range2> join(const Range1 &range1, Range2 &range2) {
+    return JoinedRange<const Range1, Range2>(range1, range2);
+}
+
+
+/// Join two ranges
+template <typename Range1, typename Range2>
+const JoinedRange<const Range1, Range2> join(const Range1 &range1, Range2 &&range2) {
+    return JoinedRange<const Range1, Range2>(range1, range2);
+}
+
+
+/// Join two ranges
+template <typename Range1, typename Range2>
+const JoinedRange<const Range1, const Range2> join(const Range1 &range1, const Range2 &range2) {
+    return JoinedRange<const Range1, const Range2>(range1, range2);
+}
+
+#pragma clang diagnostic pop
+
+
 /// Concat two ranges into a `std::vector`
 template <typename Range1, typename Range2, typename value_type = typename Range1::value_type>
-std::vector<value_type> concat(Range1 &range1, Range2 &range2) {
+std::vector<value_type> concat(const Range1 &range1, const Range2 &range2) {
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value);
     std::vector<value_type> vec;
-    for (auto &value: range1) {
+    for (const auto &value: range1) {
         vec.push_back(value);
     }
-    for (auto &value: range2) {
+    for (const auto &value: range2) {
         vec.push_back(value);
     }
     return vec;
 }
+
+
+// TODO: Map all the items into another
+
+// TODO: Sum of all the values in a range
 
 
 /// Check whether there are two duplicate items in a range
@@ -514,5 +631,84 @@ public:
         }
         std::cerr << "Failed to parse size (format: {num}{B/KiB/MiB/GiB}, e.g. 8GiB)" << std::endl;
         return 0;
+    }
+};
+
+
+/// Dynamic bitset
+class Bitset {
+private:
+    int n = 0;
+    size_t *data = nullptr;
+    bool hash_calcuated = false;
+    uint64_t hash_value = 0;
+
+    void allocate(int bits) {
+        n = bits;
+        n /= width;
+        n += bits % width == 0 ? 0 : 1;
+        assert(data == nullptr);
+        data = static_cast<size_t*>(std::malloc(n * width));
+    }
+
+public:
+    static constexpr int width = sizeof(size_t);
+
+    explicit Bitset(int bits) {
+        allocate(bits);
+    }
+
+    Bitset(int bits, const std::vector<int> &indexes) {
+        allocate(bits);
+        for (const auto &index: indexes) {
+            set_bit(index, true);
+        }
+    }
+
+    ~Bitset() {
+        assert(data != nullptr);
+        std::free(data);
+    }
+
+    /// Check whether all the bits at indexes are 1
+    [[nodiscard]] bool contains(const std::vector<int> &indexes) const {
+        return std::all_of(indexes.begin(), indexes.end(), [this](int index) -> bool {
+            return get_bit(index);
+        });
+    }
+
+    /// Set the bit at `index` to `bit` (will not check overflow)
+    void set_bit(int index, bool bit) {
+        // TODO: maybe add a `BitReference` to achieve `[]` operator
+        size_t i = index / width;
+        size_t s = index % width;
+        data[i] |= 1 << s;
+        data[i] ^= 1 << s;
+        data[i] |= bit << s;
+        hash_calcuated = false;
+    }
+
+    /// Get the bit at `index`
+    [[nodiscard]] bool get_bit(int index) const {
+        size_t i = index / width;
+        size_t s = index % width;
+        return data[i] >> s;
+    }
+
+    /// Get the hash value of the bitset
+    [[nodiscard]] uint64_t hash() {
+        if (not hash_calcuated) {
+            hash_calcuated = true;
+            hash_value = 0;
+            for (int i = 0; i < n; ++ i) {
+                hash_value = hash_value * 133ull + data[i];
+            }
+        }
+        return hash_value;
+    }
+
+    /// Clear all the bits
+    void clear() {
+        std::memset(data, 0, n * width);
     }
 };
