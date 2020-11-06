@@ -5,6 +5,7 @@
 #include <iostream>
 #include <ostream>
 #include <random>
+#include <set>
 #include <string>
 #include <type_traits>
 
@@ -368,6 +369,32 @@ std::vector<value_type> concat(Range1 &range1, Range2 &range2) {
     }
     return vec;
 }
+
+
+/// Check whether there are two duplicate items in a range
+template <typename Range, typename value_type = typename Range::value_type>
+bool check_duplicate(Range &range) {
+    std::set<value_type> set;
+    int size = 0;
+    for (auto &item: range) {
+        set.insert(item);
+        ++ size;
+    }
+    return set.size() != size;
+};
+
+
+/// Check whether there are two duplicate items in a range
+template <typename Range, typename value_type = typename Range::value_type>
+bool check_duplicate(Range &&range) {
+    std::set<value_type> set;
+    int size = 0;
+    for (auto &item: range) {
+        set.insert(item);
+        ++ size;
+    }
+    return set.size() != size;
+};
 
 
 /// Convert a number to `std::string` with units

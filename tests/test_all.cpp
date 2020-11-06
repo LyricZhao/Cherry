@@ -158,3 +158,11 @@ TEST(Cherry, JoinedIterator) {
         ASSERT_EQ(value, -- index);
     }
 }
+
+
+/// Check duplicate items in an array
+TEST(Cherry, check_duplicate) {
+    std::vector<int> vec = {1, 1, 2, 3, 4};
+    ASSERT_EQ(check_duplicate(vec), true);
+    ASSERT_EQ(check_duplicate(shift(vec, 1)), false);
+}
