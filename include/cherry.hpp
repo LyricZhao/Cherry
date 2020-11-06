@@ -9,6 +9,7 @@
 #include <string>
 #include <type_traits>
 
+
 /// A nanosecond-level timer
 class Timer {
     typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> time_point_t;
@@ -483,30 +484,35 @@ std::vector<value_type> concat(const Range1 &range1, const Range2 &range2) {
 }
 
 
-// TODO: Map all the items into another
-
-// TODO: Sum of all the values in a range
-
-
-/// Check whether there are two duplicate items in a range
-template <typename Range, typename value_type = typename Range::value_type>
-bool check_duplicate(Range &range) {
-    std::set<value_type> set;
-    int size = 0;
-    for (auto &item: range) {
-        set.insert(item);
-        ++ size;
+/// Map all the items into another
+template <typename Range, typename Function>
+auto map(const Range &range, const Function &f) {
+    using value_type = decltype(f(*range.begin()));
+    std::vector<value_type> mapped;
+    for (const auto &item: range) {
+        mapped.push_back(f(item));
     }
-    return set.size() != size;
+    return mapped;
+}
+
+
+/// Sum of all the values in a range
+template <typename Range, typename value_type = typename Range::value_type>
+value_type sum(const Range &range) {
+    value_type sum_value = 0;
+    for (const auto &item: range) {
+        sum_value += item;
+    }
+    return sum_value;
 };
 
 
 /// Check whether there are two duplicate items in a range
 template <typename Range, typename value_type = typename Range::value_type>
-bool check_duplicate(Range &&range) {
+bool check_duplicate(const Range &range) {
     std::set<value_type> set;
     int size = 0;
-    for (auto &item: range) {
+    for (const auto &item: range) {
         set.insert(item);
         ++ size;
     }

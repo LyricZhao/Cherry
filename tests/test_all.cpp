@@ -201,3 +201,25 @@ TEST(Cherry, check_duplicate) {
     ASSERT_EQ(check_duplicate(vec), true);
     ASSERT_EQ(check_duplicate(shift(vec, 1)), false);
 }
+
+
+/// Check sum
+TEST(Cherry, sum) {
+    std::vector<int> vec = {0, 1, 2, 3, 4};
+    ASSERT_EQ(sum(vec), 10);
+}
+
+
+/// Test map
+TEST(Cherry, map) {
+    struct Item {
+        int a = 0, b = 0;
+    };
+    std::vector<Item> items(10);
+    auto mapped = map(items, [](const Item &item) -> int {
+        return item.a;
+    });
+    for (const auto &value: mapped) {
+        ASSERT_EQ(value, 0);
+    }
+}
