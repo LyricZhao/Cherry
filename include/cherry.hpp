@@ -579,10 +579,14 @@ public:
 
 
 /// An unimplemented error raiser
-#define unimplemented() { \
-    std::cerr << "Unimplemented part at line " << __LINE__ << " in file " << __FILE__ << std::endl; \
-    std::exit(EXIT_FAILURE); \
+[[maybe_unused]] void unimplemented_impl(int line, const char *file) {
+    std::cerr << "Unimplemented part at line " << line << " in file " << file << std::endl;
+    std::exit(EXIT_FAILURE);
 }
+
+
+/// An unimplemented error raiser (macro)
+#define unimplemented() unimplemented_impl(__LINE__, __FILE__)
 
 
 /// Size and time units' helper
