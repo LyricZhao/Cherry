@@ -5,6 +5,10 @@
 #include "gtest/gtest.h"
 
 
+// Ignore a Clang-Tidy warning from GoogleTest's `TEST` macro
+#pragma ide diagnostic ignored "cert-err58-cpp"
+
+
 /// Test whether GoogleTest works
 TEST(Cherry, gtest) {
     int a = 1, b = 2;
@@ -13,9 +17,9 @@ TEST(Cherry, gtest) {
 
 
 /// Test `Timer`
-TEST(Cherry, Timer) {
+TEST(Cherry, NanoTimer) {
     // Use two timer to check whether the intervals are similar
-    Timer timer, wall_timer;
+    NanoTimer timer, wall_timer;
     uint64_t total_time = 0;
     for (int i = 0; i < 1000; ++ i) {
         total_time += timer.tik();
@@ -186,7 +190,7 @@ TEST(Cherry, JoinedIterator) {
         ASSERT_EQ(value, -- index);
     }
 
-    // const Range &
+    // `const Range &`
     std::vector<int> non_const_vec(10, 0);
     const std::vector<int> const_vec(10, 0);
     for (const auto &value: join(non_const_vec, join(non_const_vec, const_vec))) {

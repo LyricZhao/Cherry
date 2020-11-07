@@ -10,20 +10,26 @@
 #include <type_traits>
 
 
+// Returning a const value is not recommended by CLang-Tidy for readability, but for functionality we need it
+#pragma ide diagnostic ignored "readability-const-return-type"
+// There are some macros maybe unused
+#pragma ide diagnostic ignored "OCUnusedMacroInspection"
+
+
 /// A nanosecond-level timer
-class Timer {
+class [[maybe_unused]] NanoTimer {
+private:
     typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> time_point_t;
 
-private:
     time_point_t last_time_point;
 
 public:
-    Timer() {
+    [[maybe_unused]] NanoTimer() {
         last_time_point = std::chrono::system_clock::now();
     }
 
     /// Return the duration from last time point (constructor `Timer()` or `tik()`)
-    uint64_t tik() {
+    [[maybe_unused]] uint64_t tik() {
         time_point_t time_point = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time_point - last_time_point);
         last_time_point = time_point;
@@ -34,7 +40,7 @@ public:
 
 /// A random number generator
 template <typename value_type>
-class Random {
+class [[maybe_unused]] Random {
 private:
     typedef typename std::conditional<std::is_integral<value_type>::value,
             std::uniform_int_distribution<value_type>, std::uniform_real_distribution<value_type>>::type dist_t;
@@ -44,7 +50,7 @@ private:
 
 public:
     /// The interval is closed ([`min`, `max`])
-    Random(value_type min, value_type max, int seed=0, bool pure=true) {
+    [[maybe_unused]] Random(value_type min, value_type max, int seed=0, bool pure=true) {
         assert(min <= max);
         if (pure) {
             seed = std::random_device()();
@@ -54,26 +60,28 @@ public:
     }
 
     /// Generate a random number
-    value_type operator () () {
+    [[maybe_unused]] value_type operator () () {
         return dist(engine);
     }
 };
 
-// TODO: Support enumerate with index
-// TODO: The compiler error may not be friendly when forcedly use `iterator` as `const_iterator`
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "readability-const-return-type"
 
-/// A range which can begin from a certain position for the type with `begin()` and `end()` methods
+// TODO: Support enumerate with index
+// NOTE: The compiler error may not be friendly when use `iterator` as `const_iterator` by force
+
+
+/// A shifted range wrapper
 template <typename Range>
-class ShiftRange {
+class [[maybe_unused]] ShiftRange {
 private:
     int pos, length = -1;
     Range &range;
 
 public:
-    typedef typename std::conditional<std::is_const<Range>::value, typename Range::const_iterator, typename Range::iterator>::type iterator;
-    typedef typename std::conditional<std::is_const<Range>::value, typename Range::const_reverse_iterator, typename Range::reverse_iterator>::type reverse_iterator;
+    typedef typename std::conditional<std::is_const<Range>::value,
+            typename Range::const_iterator, typename Range::iterator>::type iterator;
+    typedef typename std::conditional<std::is_const<Range>::value,
+            typename Range::const_reverse_iterator, typename Range::reverse_iterator>::type reverse_iterator;
     typedef typename Range::const_iterator const_iterator;
     typedef typename Range::const_reverse_iterator const_reverse_iterator;
     typedef typename Range::value_type value_type;
@@ -83,61 +91,61 @@ public:
         assert(pos + this->length <= range.end() - range.begin());
     }
 
-    [[nodiscard]] iterator begin() {
+    [[maybe_unused]] [[nodiscard]] iterator begin() {
         return range.begin() + pos;
     }
 
-    [[nodiscard]] iterator end() {
+    [[maybe_unused]] [[nodiscard]] iterator end() {
         return range.begin() + pos + length;
     }
 
-    [[nodiscard]] reverse_iterator rbegin() {
+    [[maybe_unused]] [[nodiscard]] reverse_iterator rbegin() {
         auto cut = range.end() - range.begin() - (pos + length);
         return range.rbegin() + cut;
     }
 
-    [[nodiscard]] reverse_iterator rend() {
+    [[maybe_unused]] [[nodiscard]] reverse_iterator rend() {
         auto cut = range.end() - range.begin() - pos;
         return range.rbegin() + cut;
     }
 
-    [[nodiscard]] const_iterator begin() const {
+    [[maybe_unused]] [[nodiscard]] const_iterator begin() const {
         return range.begin() + pos;
     }
 
-    [[nodiscard]] const_iterator end() const {
+    [[maybe_unused]] [[nodiscard]] const_iterator end() const {
         return range.begin() + pos + length;
     }
 
-    [[nodiscard]] const_reverse_iterator rbegin() const {
+    [[maybe_unused]] [[nodiscard]] const_reverse_iterator rbegin() const {
         auto cut = range.end() - range.begin() - (pos + length);
         return range.rbegin() + cut;
     }
 
-    [[nodiscard]] const_reverse_iterator rend() const {
+    [[maybe_unused]] [[nodiscard]] const_reverse_iterator rend() const {
         auto cut = range.end() - range.begin() - pos;
         return range.rbegin() + cut;
     }
 };
 
 
-/// Return a range which can iterate from a certain position
+/// Return a shifted range wrapper (uses left-value reference)
 template <typename Range>
-ShiftRange<Range> shift(Range &range, int pos=0, int length=-1) {
+[[maybe_unused]] [[nodiscard]] ShiftRange<Range> shift(Range &range, int pos=0, int length=-1) {
     return ShiftRange(range, pos, length);
 }
 
 
-/// Return a range which can iterate from a certain position
+/// Return a shifted range wrapper (uses const reference)
 template <typename Range>
-const ShiftRange<const Range> shift(const Range &range, int pos=0, int length=-1) {
+[[maybe_unused]] [[nodiscard]] const ShiftRange<const Range> shift(const Range &range, int pos=0, int length=-1) {
     return ShiftRange<const Range>(range, pos, length);
 }
 
 
-/// A reverse wrapper for a range
+/// A reversed range wrapper
 template <typename Range>
-class ReversedRange {
+class [[maybe_unused]] ReversedRange {
 private:
     Range &range;
 
@@ -150,94 +158,96 @@ public:
 
     explicit ReversedRange(Range &range): range(range) {}
 
-    [[nodiscard]] iterator begin() {
+    [[maybe_unused]] [[nodiscard]] iterator begin() {
         return range.rbegin();
     }
 
-    [[nodiscard]] iterator end() {
+    [[maybe_unused]] [[nodiscard]] iterator end() {
         return range.rend();
     }
 
-    [[nodiscard]] reverse_iterator rbegin() {
+    [[maybe_unused]] [[nodiscard]] reverse_iterator rbegin() {
         return range.begin();
     }
 
-    [[nodiscard]] reverse_iterator rend() {
+    [[maybe_unused]] [[nodiscard]] reverse_iterator rend() {
         return range.end();
     }
 
-    [[nodiscard]] const_iterator begin() const {
+    [[maybe_unused]] [[nodiscard]] const_iterator begin() const {
         return range.rbegin();
     }
 
-    [[nodiscard]] const_iterator end() const {
+    [[maybe_unused]] [[nodiscard]] const_iterator end() const {
         return range.rend();
     }
 
-    [[nodiscard]] const_reverse_iterator rbegin() const {
+    [[maybe_unused]] [[nodiscard]] const_reverse_iterator rbegin() const {
         return range.begin();
     }
 
-    [[nodiscard]] const_reverse_iterator rend() const {
+    [[maybe_unused]] [[nodiscard]] const_reverse_iterator rend() const {
         return range.end();
     }
 };
 
 
-/// A function wrapper for `ReversedRange`
+/// Return a reversed range wrapper (uses left-value reference)
 template <typename Range>
-ReversedRange<Range> reverse(Range &range) {
+[[maybe_unused]] [[nodiscard]] ReversedRange<Range> reverse(Range &range) {
     return ReversedRange<Range>(range);
 }
 
 
-/// A function wrapper for `ReversedRange`
+/// Return a reversed range wrapper (uses right-value)
 template <typename Range>
-ReversedRange<Range> reverse(Range &&range) {
+[[maybe_unused]] [[nodiscard]] ReversedRange<Range> reverse(Range &&range) {
     return ReversedRange<Range>(range);
 }
 
 
-/// A function wrapper for `ReversedRange`
+/// Return a reversed range wrapper (uses const reference)
 template <typename Range>
-const ReversedRange<const Range> reverse(const Range &range) {
+[[maybe_unused]] [[nodiscard]] const ReversedRange<const Range> reverse(const Range &range) {
     return ReversedRange<const Range>(range);
 }
 
 
-/// A range for an indexing array and corresponding items
+/// A range iterated by an indexing array
 template <typename Array, typename Range>
-class IndexingRange {
+class [[maybe_unused]] IndexingRange {
 private:
     Array &items;
     const Range &indexes;
 
 public:
     typedef typename Array::value_type value_type;
-    typedef typename std::conditional<std::is_const<Array>::value, const typename Array::value_type&, typename Array::value_type&>::type reference;
+    typedef typename std::conditional<std::is_const<Array>::value,
+            const typename Array::value_type&, typename Array::value_type&>::type reference;
 
-    /// The iterator type for `IndexRange`
+    /// The iterator type for `IndexingRange`
     template<typename index_const_iterator_t>
-    struct Iterator {
+    struct [[maybe_unused]] Iterator {
         Array &items;
         index_const_iterator_t index_const_iterator;
 
-        Iterator(Array &items, const index_const_iterator_t &index_const_iterator): items(items), index_const_iterator(index_const_iterator) {}
+        [[maybe_unused]] Iterator(Array &items, const index_const_iterator_t &index_const_iterator):
+                items(items), index_const_iterator(index_const_iterator) {}
 
-        reference operator * () const {
+        [[maybe_unused]] reference operator * () const {
             return items[*index_const_iterator];
         }
 
-        Iterator operator ++ () {
+        [[maybe_unused]] Iterator operator ++ () {
             index_const_iterator ++;
             return *this;
         }
 
-        bool operator == (const Iterator &other) const {
+        [[maybe_unused]] bool operator == (const Iterator &other) const {
             return index_const_iterator == other.index_const_iterator;
         }
 
-        bool operator != (const Iterator &other) const {
+        [[maybe_unused]] bool operator != (const Iterator &other) const {
             return index_const_iterator != other.index_const_iterator;
         }
     };
@@ -247,60 +257,60 @@ public:
     typedef Iterator<typename Range::const_iterator> const_iterator;
     typedef Iterator<typename Range::const_reverse_iterator> const_reverse_iterator;
 
-    IndexingRange(Array &items, const Range &indexes):
+    [[maybe_unused]] IndexingRange(Array &items, const Range &indexes):
             items(items), indexes(indexes) {}
 
-    [[nodiscard]] iterator begin() {
+    [[maybe_unused]] [[nodiscard]] iterator begin() {
         return iterator(items, indexes.begin());
     }
 
-    [[nodiscard]] iterator end() {
+    [[maybe_unused]] [[nodiscard]] iterator end() {
         return iterator(items, indexes.end());
     }
 
-    [[nodiscard]] reverse_iterator rbegin() {
+    [[maybe_unused]] [[nodiscard]] reverse_iterator rbegin() {
         return reverse_iterator(items, indexes.rbegin());
     }
 
-    [[nodiscard]] reverse_iterator rend() {
+    [[maybe_unused]] [[nodiscard]] reverse_iterator rend() {
         return reverse_iterator(items, indexes.rend());
     }
 
-    [[nodiscard]] const_iterator begin() const {
+    [[maybe_unused]] [[nodiscard]] const_iterator begin() const {
         return const_iterator(items, indexes.begin());
     }
 
-    [[nodiscard]] const_iterator end() const {
+    [[maybe_unused]] [[nodiscard]] const_iterator end() const {
         return const_iterator(items, indexes.end());
     }
 
-    [[nodiscard]] const_reverse_iterator rbegin() const {
+    [[maybe_unused]] [[nodiscard]] const_reverse_iterator rbegin() const {
         return const_reverse_iterator(items, indexes.rbegin());
     }
 
-    [[nodiscard]] const_reverse_iterator rend() const {
+    [[maybe_unused]] [[nodiscard]] const_reverse_iterator rend() const {
         return const_reverse_iterator(items, indexes.rend());
     }
 };
 
 
-/// Return a range which can iterate over the corresponding items by the indexing array
+/// Return a range iterated by an indexing array (`array` is left-value reference)
 template <typename Array, typename Range>
-IndexingRange<Array, Range> indexing(Array &array, const Range &indexes) {
+[[maybe_unused]] [[nodiscard]] IndexingRange<Array, Range> indexing(Array &array, const Range &indexes) {
     return IndexingRange<Array, Range>(array, indexes);
 }
 
 
-/// Return a range which can iterate over the corresponding items by the indexing array
+/// Return a range iterated by an indexing array (`array` is const reference)
 template <typename Array, typename Range>
-const IndexingRange<const Array, Range> indexing(const Array &array, const Range &indexes) {
+[[maybe_unused]] [[nodiscard]] const IndexingRange<const Array, Range> indexing(const Array &array, const Range &indexes) {
     return IndexingRange<const Array, Range>(array, indexes);
 }
 
 
 /// A joined range for two ranges
 template <typename Range1, typename Range2>
-class JoinedRange {
+class [[maybe_unused]] JoinedRange {
 private:
     Range1 &range1;
     Range2 &range2;
@@ -312,28 +322,29 @@ public:
 
     static constexpr bool be_const = std::is_const<Range1>::value or std::is_const<Range2>::value;
     typedef typename Range1::value_type value_type;
-    typedef typename std::conditional<be_const, const typename Range1::value_type&, typename Range1::value_type&>::type reference;
+    typedef typename std::conditional<be_const,
+            const typename Range1::value_type&, typename Range1::value_type&>::type reference;
 
     /// The iterator type for `JoinedRange`
     template <typename iterator1_t, typename iterator2_t>
-    struct Iterator {
+    struct [[maybe_unused]] Iterator {
         bool first;
         iterator1_t iterator1, iterator1_end;
         iterator2_t iterator2;
 
-        Iterator(bool first, const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
+        [[maybe_unused]] Iterator(bool first, const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
                 first(first), iterator1(iterator1), iterator1_end(iterator1_end), iterator2(iterator2) {}
 
-        Iterator(const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
+        [[maybe_unused]] Iterator(const iterator1_t &iterator1, const iterator1_t &iterator1_end, const iterator2_t &iterator2):
                 iterator1(iterator1), iterator1_end(iterator1_end), iterator2(iterator2) {
             first = iterator1 != iterator1_end;
         }
 
-        reference operator * () const {
+        [[maybe_unused]] reference operator * () const {
             return first ? *iterator1 : *iterator2;
         }
 
-        Iterator operator ++ () {
+        [[maybe_unused]] Iterator operator ++ () {
             if (first) {
                 ++ iterator1;
                 if (iterator1 == iterator1_end) {
@@ -345,14 +356,14 @@ public:
             return *this;
         }
 
-        bool operator == (const Iterator &other) const {
+        [[maybe_unused]] bool operator == (const Iterator &other) const {
             if (first != other.first) {
                 return false;
             }
             return first ? iterator1 == other.iterator1 : iterator2 == other.iterator2;
         }
 
-        bool operator != (const Iterator &other) const {
+        [[maybe_unused]] bool operator != (const Iterator &other) const {
             if (first == other.first) {
                 return first ? iterator1 != other.iterator1 : iterator2 != other.iterator2;
             }
@@ -369,109 +380,108 @@ public:
     typedef Iterator<typename Range1::const_iterator, typename Range2::const_iterator> const_iterator;
     typedef Iterator<typename Range2::const_reverse_iterator, typename Range1::const_reverse_iterator> const_reverse_iterator;
 
-    JoinedRange(Range1 &range1, Range2 &range2): range1(range1), range2(range2) {}
+    [[maybe_unused]] JoinedRange(Range1 &range1, Range2 &range2): range1(range1), range2(range2) {}
 
-    [[nodiscard]] iterator begin() {
+    [[maybe_unused]] [[nodiscard]] iterator begin() {
         return iterator(range1.begin(), range1.end(), range2.begin());
     }
 
-    [[nodiscard]] iterator end() {
+    [[maybe_unused]] [[nodiscard]] iterator end() {
         return iterator(false, range1.end(), range1.end(), range2.end());
     }
 
-    [[nodiscard]] reverse_iterator rbegin() {
+    [[maybe_unused]] [[nodiscard]] reverse_iterator rbegin() {
         return reverse_iterator(range2.rbegin(), range2.rend(), range1.rbegin());
     }
 
-    [[nodiscard]] reverse_iterator rend() {
+    [[maybe_unused]] [[nodiscard]] reverse_iterator rend() {
         return reverse_iterator(false, range2.rend(), range2.rend(), range1.rend());
     }
 
-    [[nodiscard]] const_iterator begin() const {
+    [[maybe_unused]] [[nodiscard]] const_iterator begin() const {
         return const_iterator(range1.begin(), range1.end(), range2.begin());
     }
 
-    [[nodiscard]] const_iterator end() const {
+    [[maybe_unused]] [[nodiscard]] const_iterator end() const {
         return const_iterator(false, range1.end(), range1.end(), range2.end());
     }
 
-    [[nodiscard]] const_reverse_iterator rbegin() const {
+    [[maybe_unused]] [[nodiscard]] const_reverse_iterator rbegin() const {
         return const_reverse_iterator(range2.rbegin(), range2.rend(), range1.rbegin());
     }
 
-    [[nodiscard]] const_reverse_iterator rend() const {
+    [[maybe_unused]] [[nodiscard]] const_reverse_iterator rend() const {
         return const_reverse_iterator(false, range2.rend(), range2.rend(), range1.rend());
     }
 };
 
-/// Join two ranges
+
+/// Return a joined range (1st range: left-value reference, 2nd range: left-value reference)
 template <typename Range1, typename Range2>
-JoinedRange<Range1, Range2> join(Range1 &range1, Range2 &range2) {
+[[maybe_unused]] [[nodiscard]] JoinedRange<Range1, Range2> join(Range1 &range1, Range2 &range2) {
     return JoinedRange<Range1, Range2>(range1, range2);
 }
 
 
-/// Join two ranges
+/// Return a joined range (1st range: left-value reference, 2nd range: right-value)
 template <typename Range1, typename Range2>
-JoinedRange<Range1, Range2> join(Range1 &range1, Range2 &&range2) {
+[[maybe_unused]] [[nodiscard]] JoinedRange<Range1, Range2> join(Range1 &range1, Range2 &&range2) {
     return JoinedRange<Range1, Range2>(range1, range2);
 }
 
 
-/// Join two ranges
+/// Return a joined range (1st range: left-value reference, 2nd range: const reference)
 template <typename Range1, typename Range2>
-const JoinedRange<Range1, const Range2> join(Range1 &range1, const Range2 &range2) {
+[[maybe_unused]] [[nodiscard]] const JoinedRange<Range1, const Range2> join(Range1 &range1, const Range2 &range2) {
     return JoinedRange<Range1, const Range2>(range1, range2);
 }
 
 
-/// Join two ranges
+/// Return a joined range (1st range: right-value, 2nd range: left-value reference)
 template <typename Range1, typename Range2>
-JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &range2) {
+[[maybe_unused]] [[nodiscard]] JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &range2) {
     return JoinedRange<Range1, Range2>(range1, range2);
 }
 
 
-/// Join two ranges
+/// Return a joined range (1st range: right-value, 2nd range: right-value)
 template <typename Range1, typename Range2>
-JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &&range2) {
+[[maybe_unused]] [[nodiscard]] JoinedRange<Range1, Range2> join(Range1 &&range1, Range2 &&range2) {
     return JoinedRange<Range1, Range2>(range1, range2);
 }
 
 
-/// Join two ranges
+/// Return a joined range (1st range: right-value, 2nd range: const reference)
 template <typename Range1, typename Range2>
-const JoinedRange<Range1, const Range2> join(Range1 &&range1, const Range2 &range2) {
+[[maybe_unused]] [[nodiscard]] const JoinedRange<Range1, const Range2> join(Range1 &&range1, const Range2 &range2) {
     return JoinedRange<Range1, const Range2>(range1, range2);
 }
 
 
-/// Join two ranges
+/// Return a joined range (1st range: const reference, 2nd range: left-value reference)
 template <typename Range1, typename Range2>
-const JoinedRange<const Range1, Range2> join(const Range1 &range1, Range2 &range2) {
+[[maybe_unused]] [[nodiscard]] const JoinedRange<const Range1, Range2> join(const Range1 &range1, Range2 &range2) {
     return JoinedRange<const Range1, Range2>(range1, range2);
 }
 
 
-/// Join two ranges
+/// Return a joined range (1st range: const reference, 2nd range: right-value)
 template <typename Range1, typename Range2>
-const JoinedRange<const Range1, Range2> join(const Range1 &range1, Range2 &&range2) {
+[[maybe_unused]] [[nodiscard]] const JoinedRange<const Range1, Range2> join(const Range1 &range1, Range2 &&range2) {
     return JoinedRange<const Range1, Range2>(range1, range2);
 }
 
 
-/// Join two ranges
+/// Return a joined range (1st range: const reference, 2nd range: const reference)
 template <typename Range1, typename Range2>
-const JoinedRange<const Range1, const Range2> join(const Range1 &range1, const Range2 &range2) {
+[[maybe_unused]] [[nodiscard]] const JoinedRange<const Range1, const Range2> join(const Range1 &range1, const Range2 &range2) {
     return JoinedRange<const Range1, const Range2>(range1, range2);
 }
-
-#pragma clang diagnostic pop
 
 
 /// Concat two ranges into a `std::vector`
 template <typename Range1, typename Range2, typename value_type = typename Range1::value_type>
-std::vector<value_type> concat(const Range1 &range1, const Range2 &range2) {
+[[maybe_unused]] [[nodiscard]] std::vector<value_type> concat(const Range1 &range1, const Range2 &range2) {
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value);
     std::vector<value_type> vec;
     for (const auto &value: range1) {
@@ -486,9 +496,8 @@ std::vector<value_type> concat(const Range1 &range1, const Range2 &range2) {
 
 /// Map all the items into another
 template <typename Range, typename Function>
-auto map(const Range &range, const Function &f) {
-    using value_type = decltype(f(*range.begin()));
-    std::vector<value_type> mapped;
+[[maybe_unused]] [[nodiscard]] auto map(const Range &range, const Function &f) {
+    std::vector<decltype(f(*range.begin()))> mapped;
     for (const auto &item: range) {
         mapped.push_back(f(item));
     }
@@ -498,18 +507,18 @@ auto map(const Range &range, const Function &f) {
 
 /// Sum of all the values in a range
 template <typename Range, typename value_type = typename Range::value_type>
-value_type sum(const Range &range) {
+[[maybe_unused]] [[nodiscard]] value_type sum(const Range &range) {
     value_type sum_value = 0;
     for (const auto &item: range) {
         sum_value += item;
     }
     return sum_value;
-};
+}
 
 
 /// Check whether there are two duplicate items in a range
 template <typename Range, typename value_type = typename Range::value_type>
-bool check_duplicate(const Range &range) {
+[[maybe_unused]] [[nodiscard]] bool check_duplicate(const Range &range) {
     std::set<value_type> set;
     int size = 0;
     for (const auto &item: range) {
@@ -517,12 +526,12 @@ bool check_duplicate(const Range &range) {
         ++ size;
     }
     return set.size() != size;
-};
+}
 
 
 /// Convert a number to `std::string` with units
 template <typename T>
-std::string pretty(T value, T scale, const char* *units, int max_level) {
+[[maybe_unused]] [[nodiscard]] std::string pretty(T value, T scale, const char* *units, int max_level) {
     int count = 0;
     auto d = static_cast<double>(value);
     while (d > scale && count < max_level - 1) {
@@ -536,14 +545,14 @@ std::string pretty(T value, T scale, const char* *units, int max_level) {
 
 
 /// Convert a size to `std::string` with units
-std::string prettyBytes(size_t size) {
+[[maybe_unused]] [[nodiscard]] std::string prettyBytes(size_t size) {
     static const char* units[5] = {"B", "KiB", "MiB", "GiB"};
     return pretty<size_t>(size, 1024, units, 4);
 }
 
 
 /// Convert a nanosecond to `std::string` with units (always millisecond if `fixed` is true)
-std::string prettyNanoseconds(uint64_t duration, bool fixed=true) {
+[[maybe_unused]] [[nodiscard]] std::string prettyNanoseconds(uint64_t duration, bool fixed=true) {
     // To millisecond
     if (fixed) {
         static char buffer[64];
@@ -557,15 +566,15 @@ std::string prettyNanoseconds(uint64_t duration, bool fixed=true) {
 
 
 /// Console colors
-class ConsoleColor {
+class [[maybe_unused]] ConsoleColor {
 public:
-    static constexpr const char *reset  = "\033[0m";
-    static constexpr const char *black  = "\033[30m";
-    static constexpr const char *red    = "\033[31m";
-    static constexpr const char *green  = "\033[32m";
-    static constexpr const char *yellow = "\033[33m";
-    static constexpr const char *blue   = "\033[34m";
-    static constexpr const char *white  = "\033[37m";
+    [[maybe_unused]] static constexpr const char *reset  = "\033[0m";
+    [[maybe_unused]] static constexpr const char *black  = "\033[30m";
+    [[maybe_unused]] static constexpr const char *red    = "\033[31m";
+    [[maybe_unused]] static constexpr const char *green  = "\033[32m";
+    [[maybe_unused]] static constexpr const char *yellow = "\033[33m";
+    [[maybe_unused]] static constexpr const char *blue   = "\033[34m";
+    [[maybe_unused]] static constexpr const char *white  = "\033[37m";
 };
 
 
@@ -577,50 +586,50 @@ public:
 
 
 /// Size and time units' helper
-class Unit {
+class [[maybe_unused]] Unit {
 public:
     template<typename T>
-    static constexpr size_t B(T size) {
+    [[maybe_unused]] [[nodiscard]] static constexpr size_t B(T size) {
         return size;
     }
 
     template<typename T>
-    static constexpr size_t KiB(T size) {
+    [[maybe_unused]] [[nodiscard]] static constexpr size_t KiB(T size) {
         return size * 1024ull;
     }
 
     template<typename T>
-    static constexpr size_t MiB(T size) {
+    [[maybe_unused]] [[nodiscard]] static constexpr size_t MiB(T size) {
         return size * 1024ull * 1024ull;
     }
 
     template<typename T>
-    static constexpr size_t GiB(T size) {
+    [[maybe_unused]] [[nodiscard]] static constexpr size_t GiB(T size) {
         return size * 1024ull * 1024ull * 1024ull;
     }
 
     template<typename T>
-    static constexpr uint64_t ns(T duration) {
+    [[maybe_unused]] [[nodiscard]] static constexpr uint64_t ns(T duration) {
         return duration;
     }
 
     template<typename T>
-    static constexpr uint64_t us(T duration) {
+    [[maybe_unused]] [[nodiscard]] static constexpr uint64_t us(T duration) {
         return duration * 1000ull;
     }
 
     template<typename T>
-    static constexpr uint64_t ms(T duration) {
+    [[maybe_unused]] [[nodiscard]] static constexpr uint64_t ms(T duration) {
         return duration * 1000000ull;
     }
 
     template<typename T>
-    static constexpr uint64_t s(T duration) {
+    [[maybe_unused]] [[nodiscard]] static constexpr uint64_t s(T duration) {
         return duration * 1000000000ull;
     }
 
     /// Convert `std::string` to `size_t`
-    static size_t bytes_from(const std::string &text) {
+    [[maybe_unused]] [[nodiscard]] static size_t bytes_from(const std::string &text) {
         const char *ptr = text.c_str();
         char *unit_ptr;
         double size = strtod(ptr, &unit_ptr);
@@ -642,14 +651,14 @@ public:
 
 
 /// Dynamic bitset
-class Bitset {
+class [[maybe_unused]] Bitset {
 private:
     int n = 0;
     size_t *data = nullptr;
-    bool hash_calcuated = false;
+    bool hash_calculated = false;
     uint64_t hash_value = 0;
 
-    void allocate(int bits) {
+    [[maybe_unused]] void allocate(int bits) {
         n = bits;
         n /= width;
         n += bits % width == 0 ? 0 : 1;
@@ -660,51 +669,51 @@ private:
 public:
     static constexpr int width = sizeof(size_t);
 
-    explicit Bitset(int bits) {
+    [[maybe_unused]] explicit Bitset(int bits) {
         allocate(bits);
     }
 
-    Bitset(int bits, const std::vector<int> &indexes) {
+    [[maybe_unused]] Bitset(int bits, const std::vector<int> &indexes) {
         allocate(bits);
         for (const auto &index: indexes) {
             set_bit(index, true);
         }
     }
 
-    ~Bitset() {
+    [[maybe_unused]] ~Bitset() {
         assert(data != nullptr);
         std::free(data);
     }
 
     /// Check whether all the bits at indexes are 1
-    [[nodiscard]] bool contains(const std::vector<int> &indexes) const {
+    [[maybe_unused]] [[nodiscard]] bool contains(const std::vector<int> &indexes) const {
         return std::all_of(indexes.begin(), indexes.end(), [this](int index) -> bool {
             return get_bit(index);
         });
     }
 
     /// Set the bit at `index` to `bit` (will not check overflow)
-    void set_bit(int index, bool bit) {
+    [[maybe_unused]] void set_bit(int index, bool bit) {
         // TODO: maybe add a `BitReference` to achieve `[]` operator
         size_t i = index / width;
         size_t s = index % width;
         data[i] |= 1 << s;
         data[i] ^= 1 << s;
         data[i] |= bit << s;
-        hash_calcuated = false;
+        hash_calculated = false;
     }
 
     /// Get the bit at `index`
-    [[nodiscard]] bool get_bit(int index) const {
+    [[maybe_unused]] [[nodiscard]] bool get_bit(int index) const {
         size_t i = index / width;
         size_t s = index % width;
         return data[i] >> s;
     }
 
     /// Get the hash value of the bitset
-    [[nodiscard]] uint64_t hash() {
-        if (not hash_calcuated) {
-            hash_calcuated = true;
+    [[maybe_unused]] [[nodiscard]] uint64_t hash() {
+        if (not hash_calculated) {
+            hash_calculated = true;
             hash_value = 0;
             for (int i = 0; i < n; ++ i) {
                 hash_value = hash_value * 133ull + data[i];
@@ -714,7 +723,7 @@ public:
     }
 
     /// Clear all the bits
-    void clear() {
+    [[maybe_unused]] void clear() {
         std::memset(data, 0, n * width);
     }
 };
