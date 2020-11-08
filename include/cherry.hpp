@@ -505,18 +505,18 @@ template <typename Range, typename Function>
 }
 
 
-/// "Cat" all the items in range (const reference)
+/// For each all the items in range (const reference)
 template <typename Range, typename Function>
-[[maybe_unused]] void cat(const Range &range, const Function &f) {
+[[maybe_unused]] void for_each(const Range &range, const Function &f) {
     for (const auto &item: range) {
         f(item);
     }
 }
 
 
-/// "Cat" all the items in range (const reference)
+/// For each all the items in range (const reference)
 template <typename Range, typename Function>
-[[maybe_unused]] void cat(Range &range, const Function &f) {
+[[maybe_unused]] void for_each(Range &range, const Function &f) {
     for (auto &item: range) {
         f(item);
     }
