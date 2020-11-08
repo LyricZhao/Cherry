@@ -494,7 +494,7 @@ template <typename Range1, typename Range2, typename value_type = typename Range
 }
 
 
-/// Map all the items into another
+/// Map all the items in range into another `std::vector`
 template <typename Range, typename Function>
 [[maybe_unused]] [[nodiscard]] auto map(const Range &range, const Function &f) {
     std::vector<decltype(f(*range.begin()))> mapped;
@@ -502,6 +502,24 @@ template <typename Range, typename Function>
         mapped.push_back(f(item));
     }
     return mapped;
+}
+
+
+/// "Cat" all the items in range (const reference)
+template <typename Range, typename Function>
+[[maybe_unused]] void cat(const Range &range, const Function &f) {
+    for (const auto &item: range) {
+        f(item);
+    }
+}
+
+
+/// "Cat" all the items in range (const reference)
+template <typename Range, typename Function>
+[[maybe_unused]] void cat(Range &range, const Function &f) {
+    for (auto &item: range) {
+        f(item);
+    }
 }
 
 
@@ -658,7 +676,7 @@ public:
 class [[maybe_unused]] Bitset {
 private:
     int n = 0;
-    size_t *data = nullptr;
+    uint64_t *data = nullptr;
     bool hash_calculated = false;
     uint64_t hash_value = 0;
 
@@ -667,14 +685,23 @@ private:
         n /= width;
         n += bits % width == 0 ? 0 : 1;
         assert(data == nullptr);
-        data = static_cast<size_t*>(std::malloc(n * width));
+        data = static_cast<uint64_t*> (std::malloc(n * width));
+        std::memset(data, 0, n * width);
     }
 
 public:
-    static constexpr int width = sizeof(size_t);
+    static constexpr int width = sizeof(uint64_t);
 
     [[maybe_unused]] explicit Bitset(int bits) {
         allocate(bits);
+    }
+
+    [[maybe_unused]] Bitset(const Bitset &bitset) {
+        n = bitset.n;
+        data = static_cast<uint64_t*> (std::malloc(n * width));
+        std::memcpy(data, bitset.data, n * width);
+        hash_calculated = bitset.hash_calculated;
+        hash_value = bitset.hash_value;
     }
 
     [[maybe_unused]] Bitset(int bits, const std::vector<int> &indexes) {
@@ -701,9 +728,9 @@ public:
         // TODO: maybe add a `BitReference` to achieve `[]` operator
         size_t i = index / width;
         size_t s = index % width;
-        data[i] |= 1 << s;
-        data[i] ^= 1 << s;
-        data[i] |= bit << s;
+        data[i] |= 1ull << s;
+        data[i] ^= 1ull << s;
+        data[i] |= static_cast<uint64_t> (bit) << s;
         hash_calculated = false;
     }
 
@@ -711,7 +738,7 @@ public:
     [[maybe_unused]] [[nodiscard]] bool get_bit(int index) const {
         size_t i = index / width;
         size_t s = index % width;
-        return data[i] >> s;
+        return (data[i] >> s) & 1ull;
     }
 
     /// Get the hash value of the bitset
