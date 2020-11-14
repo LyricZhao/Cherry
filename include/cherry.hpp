@@ -711,9 +711,9 @@ public:
 
 
 /// Dynamic bitset
-template <typename data_t = uint64_t>
 class [[maybe_unused]] Bitset {
 private:
+    typedef uint64_t data_t;
     int bits = 0, data_length = 0;
     data_t *data = nullptr;
     bool hash_calculated = false;
@@ -744,11 +744,11 @@ public:
         hash_value = bitset.hash_value;
     }
 
-    [[maybe_unused]] Bitset(int bits, const std::vector<int> &indexes) {
-        allocate(bits);
+    [[maybe_unused]] Bitset(int bits, const std::vector<int> &indexes): bits(bits) {
+        allocate();
         clear();
         for (const auto &index: indexes) {
-            set_bit(index, 1);
+            set_bit(index, true);
         }
     }
 
@@ -769,7 +769,7 @@ public:
         });
     }
 
-    /// Set the bit at `index` to `bit` (will not check overflow)
+    /// Set the bit at `index` to `bit`
     [[maybe_unused]] void set_bit(int index, bool bit) {
         // TODO: maybe add a `BitReference` to achieve `[]` operator
         assert(index >= 0 and index < bits);
