@@ -482,7 +482,8 @@ template <typename Range1, typename Range2>
 /// Concat two ranges into a `std::vector`
 template <typename Range1, typename Range2, typename value_type = typename Range1::value_type>
 [[maybe_unused]] [[nodiscard]] std::vector<value_type> concat(const Range1 &range1, const Range2 &range2) {
-    static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value);
+    static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
+            "The types of two ranges in function concat must be same");
     std::vector<value_type> vec;
     for (const auto &value: range1) {
         vec.push_back(value);
@@ -520,6 +521,43 @@ template <typename Range, typename Function>
     for (auto &item: range) {
         f(item);
     }
+}
+
+
+/// For each all the items in range (right-value)
+template <typename Range, typename Function>
+[[maybe_unused]] void for_each(Range &&range, const Function &f) {
+    for (auto &item: range) {
+        f(item);
+    }
+}
+
+
+/// All of the items in the range satisfy the function
+template <typename Range, typename Function>
+[[maybe_unused]] bool all_of(const Range &range, const Function &f) {
+    static_assert(std::is_same<bool, decltype(f(*range.begin()))>::value,
+                  "The return type of function f must be bool");
+    for (const auto &item: range) {
+        if (not f(item)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+/// None of the items in the range satisfies the function
+template <typename Range, typename Function>
+[[maybe_unused]] bool none_of(const Range &range, const Function &f) {
+    static_assert(std::is_same<bool, decltype(f(*range.begin()))>::value,
+                  "The return type of function f must be bool");
+    for (const auto &item: range) {
+        if (f(item)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 

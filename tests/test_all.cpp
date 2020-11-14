@@ -199,22 +199,7 @@ TEST(Cherry, JoinedIterator) {
 }
 
 
-/// Check duplicate items in an array
-TEST(Cherry, check_duplicate) {
-    std::vector<int> vec = {1, 1, 2, 3, 4};
-    ASSERT_EQ(check_duplicate(vec), true);
-    ASSERT_EQ(check_duplicate(shift(vec, 1)), false);
-}
-
-
-/// Check sum
-TEST(Cherry, sum) {
-    std::vector<int> vec = {0, 1, 2, 3, 4};
-    ASSERT_EQ(sum(vec), 10);
-}
-
-
-/// Test map
+/// Test `map`
 TEST(Cherry, map) {
     struct Item {
         int a = 0, b = 0;
@@ -226,4 +211,69 @@ TEST(Cherry, map) {
     for (const auto &value: mapped) {
         ASSERT_EQ(value, 0);
     }
+}
+
+
+/// Test `for_each`
+TEST(Cherry, for_each) {
+    // Test non-const
+    int index = 0;
+    std::vector<int> vec = {0, 1, 2, 3, 4};
+    for_each(reverse(vec), [&index](int &item) {
+        item = index ++;
+    });
+    for (const auto &item: vec) {
+        ASSERT_EQ(item, -- index);
+    }
+
+    // Test const
+    const std::vector<int> const_vec = vec;
+    std::vector<int> vec2;
+    for_each(const_vec, [&vec2](const int &item) {
+        vec2.push_back(item);
+    });
+    ASSERT_EQ(vec2.size(), 5);
+}
+
+
+/// Test `all_of`
+TEST(Cherry, all_of) {
+    std::vector<int> vec = {0, 1, 2, 3, 4};
+    auto check1 = [](const int &item) -> bool {
+        return item < 5;
+    };
+    auto check2 = [](const int &item) -> bool {
+        return item < 4;
+    };
+    ASSERT_EQ(all_of(vec, check1), true);
+    ASSERT_EQ(all_of(vec, check2), false);
+}
+
+
+/// Test `none_of`
+TEST(Cherry, none_of) {
+    std::vector<int> vec = {0, 1, 2, 3, 4};
+    auto check1 = [](const int &item) -> bool {
+        return item >= 5;
+    };
+    auto check2 = [](const int &item) -> bool {
+        return item >= 4;
+    };
+    ASSERT_EQ(none_of(vec, check1), true);
+    ASSERT_EQ(none_of(vec, check2), false);
+}
+
+
+/// Check `sum`
+TEST(Cherry, sum) {
+    std::vector<int> vec = {0, 1, 2, 3, 4};
+    ASSERT_EQ(sum(vec), 10);
+}
+
+
+/// Check `check_duplicate`
+TEST(Cherry, check_duplicate) {
+    std::vector<int> vec = {1, 1, 2, 3, 4};
+    ASSERT_EQ(check_duplicate(vec), true);
+    ASSERT_EQ(check_duplicate(shift(vec, 1)), false);
 }
