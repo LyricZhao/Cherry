@@ -1,3 +1,4 @@
+#include <bitset>
 #include <cmath>
 #include <iostream>
 
@@ -276,4 +277,33 @@ TEST(Cherry, check_duplicate) {
     std::vector<int> vec = {1, 1, 2, 3, 4};
     ASSERT_EQ(check_duplicate(vec), true);
     ASSERT_EQ(check_duplicate(shift(vec, 1)), false);
+}
+
+
+/// Check `Bitset`
+TEST(Cherry, Bitset) {
+    auto check = [](int length, auto &std_bitset, auto &my_bitset) -> bool {
+        Random<int> random(0, length - 1);
+        Random<bool> random_bool(false, true);
+        for (int i = 0; i < 10; ++ i) {
+            int k = random();
+            bool value = random_bool();
+            std_bitset[k] = value;
+            my_bitset.set_bit(k, value);
+        }
+        for (int i = 0; i < length; ++ i) {
+            if (std_bitset[i] != my_bitset.get_bit(i)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    std::bitset<3> std_bitset_3;
+    Bitset my_bitset_3(3);
+    ASSERT_EQ(check(3, std_bitset_3, my_bitset_3), true);
+
+    std::bitset<1024> std_bitset_1024;
+    Bitset my_bitset_1024(1024);
+    ASSERT_EQ(check(1024, std_bitset_1024, my_bitset_1024), true);
 }

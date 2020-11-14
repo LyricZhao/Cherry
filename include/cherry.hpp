@@ -711,41 +711,44 @@ public:
 
 
 /// Dynamic bitset
+template <typename data_t = uint64_t>
 class [[maybe_unused]] Bitset {
 private:
-    int n = 0;
-    uint64_t *data = nullptr;
+    int bits = 0, data_length = 0;
+    data_t *data = nullptr;
     bool hash_calculated = false;
-    uint64_t hash_value = 0;
+    data_t hash_value = 0;
 
-    [[maybe_unused]] void allocate(int bits) {
-        n = bits;
-        n /= width;
-        n += bits % width == 0 ? 0 : 1;
+    [[maybe_unused]] void allocate() {
+        data_length = bits;
+        data_length /= width;
+        data_length += bits % width == 0 ? 0 : 1;
+        assert(data_length > 0);
         assert(data == nullptr);
-        data = static_cast<uint64_t*> (std::malloc(n * width));
-        std::memset(data, 0, n * width);
+        data = static_cast<data_t*> (std::malloc(data_length * width));
     }
 
 public:
-    static constexpr int width = sizeof(uint64_t);
+    static constexpr size_t width = sizeof(data_t) << 3;
 
-    [[maybe_unused]] explicit Bitset(int bits) {
-        allocate(bits);
+    [[maybe_unused]] explicit Bitset(int bits): bits(bits) {
+        allocate();
+        clear();
     }
 
     [[maybe_unused]] Bitset(const Bitset &bitset) {
-        n = bitset.n;
-        data = static_cast<uint64_t*> (std::malloc(n * width));
-        std::memcpy(data, bitset.data, n * width);
+        bits = bitset.bits, data_length = bitset.data_length;
+        data = static_cast<data_t*> (std::malloc(data_length * width));
+        std::memcpy(data, bitset.data, data_length * width);
         hash_calculated = bitset.hash_calculated;
         hash_value = bitset.hash_value;
     }
 
     [[maybe_unused]] Bitset(int bits, const std::vector<int> &indexes) {
         allocate(bits);
+        clear();
         for (const auto &index: indexes) {
-            set_bit(index, true);
+            set_bit(index, 1);
         }
     }
 
@@ -754,9 +757,14 @@ public:
         std::free(data);
     }
 
+    /// Clear all the bits
+    [[maybe_unused]] void clear() {
+        std::memset(data, 0, data_length * width);
+    }
+
     /// Check whether all the bits at indexes are 1
     [[maybe_unused]] [[nodiscard]] bool contains(const std::vector<int> &indexes) const {
-        return std::all_of(indexes.begin(), indexes.end(), [this](int index) -> bool {
+        return all_of(indexes, [this](int index) -> bool {
             return get_bit(index);
         });
     }
@@ -764,35 +772,32 @@ public:
     /// Set the bit at `index` to `bit` (will not check overflow)
     [[maybe_unused]] void set_bit(int index, bool bit) {
         // TODO: maybe add a `BitReference` to achieve `[]` operator
+        assert(index >= 0 and index < bits);
         size_t i = index / width;
         size_t s = index % width;
-        data[i] |= 1ull << s;
-        data[i] ^= 1ull << s;
-        data[i] |= static_cast<uint64_t> (bit) << s;
+        data[i] |= static_cast<data_t> (1) << s;
+        data[i] ^= static_cast<data_t> (1) << s;
+        data[i] |= static_cast<data_t> (bit) << s;
         hash_calculated = false;
     }
 
     /// Get the bit at `index`
     [[maybe_unused]] [[nodiscard]] bool get_bit(int index) const {
+        assert(index >= 0 and index < bits);
         size_t i = index / width;
         size_t s = index % width;
-        return (data[i] >> s) & 1ull;
+        return (data[i] >> s) & static_cast<data_t> (1);
     }
 
     /// Get the hash value of the bitset
-    [[maybe_unused]] [[nodiscard]] uint64_t hash() {
+    [[maybe_unused]] [[nodiscard]] data_t hash() {
         if (not hash_calculated) {
             hash_calculated = true;
             hash_value = 0;
-            for (int i = 0; i < n; ++ i) {
-                hash_value = hash_value * 133ull + data[i];
+            for (int i = 0; i < data_length; ++ i) {
+                hash_value = hash_value * static_cast<data_t> (133) + data[i];
             }
         }
         return hash_value;
-    }
-
-    /// Clear all the bits
-    [[maybe_unused]] void clear() {
-        std::memset(data, 0, n * width);
     }
 };
