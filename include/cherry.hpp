@@ -10,7 +10,7 @@
 #include <type_traits>
 
 
-// Returning a const value is not recommended by CLang-Tidy for readability, but for functionality we need it
+// Returning a const value is not recommended by Clang-Tidy for readability, but for functionality we need it
 #pragma ide diagnostic ignored "readability-const-return-type"
 // There are some macros maybe unused
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
@@ -537,8 +537,8 @@ template <typename Range, typename Function>
 template <typename Range, typename Function>
 [[maybe_unused]] bool all_of(const Range &range, const Function &f) {
     static_assert(std::is_same<bool, decltype(f(*range.begin()))>::value,
-                  "The return type of function f must be bool");
-    for (const auto &item: range) {
+            "The return type of function f must be bool");
+    for (const auto &item: range) { // NOLINT(readability-use-anyofallof)
         if (not f(item)) {
             return false;
         }
@@ -552,12 +552,38 @@ template <typename Range, typename Function>
 [[maybe_unused]] bool none_of(const Range &range, const Function &f) {
     static_assert(std::is_same<bool, decltype(f(*range.begin()))>::value,
                   "The return type of function f must be bool");
-    for (const auto &item: range) {
+    for (const auto &item: range) { // NOLINT(readability-use-anyofallof)
         if (f(item)) {
             return false;
         }
     }
     return true;
+}
+
+
+/// Any of the items in the range satisfies the function
+template <typename Range, typename Function>
+[[maybe_unused]] bool any_of(const Range &range, const Function &f) {
+    static_assert(std::is_same<bool, decltype(f(*range.begin()))>::value,
+                  "The return type of function f must be bool");
+    for (const auto &item: range) { // NOLINT(readability-use-anyofallof)
+        if (f(item)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+/// Find a certain item in a range
+template <typename Range, typename value_type = typename Range::value_type>
+[[maybe_unused]] [[nodiscard]] bool find(const Range &range, const value_type &value) {
+    for (const auto &item: range) { // NOLINT(readability-use-anyofallof)
+        if (item == value) {
+            return true;
+        }
+    }
+    return false;
 }
 
 

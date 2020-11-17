@@ -265,6 +265,30 @@ TEST(Cherry, none_of) {
 }
 
 
+/// Test `any_of`
+TEST(Cherry, any_of) {
+    std::vector<int> vec = {0, 1, 2, 3, 4};
+    auto check1 = [](const int &item) -> bool {
+        return item == 2;
+    };
+    auto check2 = [](const int &item) -> bool {
+        return item == 5;
+    };
+    ASSERT_EQ(any_of(vec, check1), true);
+    ASSERT_EQ(any_of(vec, check2), false);
+}
+
+
+/// Test `find`
+TEST(Cherry, find) {
+    std::vector<int> vec = {0, 1, 2, 3, 4};
+    ASSERT_EQ(find(vec, 0), true);
+    ASSERT_EQ(find(shift(vec, 1), 0), false);
+    ASSERT_EQ(find(shift(vec, 1), 4), true);
+    ASSERT_EQ(find(shift(vec, 1, 2), 4), false);
+}
+
+
 /// Check `sum`
 TEST(Cherry, sum) {
     std::vector<int> vec = {0, 1, 2, 3, 4};
