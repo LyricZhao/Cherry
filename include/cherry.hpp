@@ -660,6 +660,16 @@ public:
 };
 
 
+/// Debug print (file and line)
+[[maybe_unused]] void debug_print_impl(int line, const char *file) {
+    std::cout << ConsoleColor::green << "Debugging at line " << line << " in file " << file << ConsoleColor::reset << std::endl;
+}
+
+
+/// Debug print (file and line, macro)
+#define debug_print() debug_print_impl(__LINE__, __FILE__)
+
+
 /// An unimplemented error raiser
 [[maybe_unused]] void unimplemented_impl(int line, const char *file) {
     std::cerr << "Unimplemented part at line " << line << " in file " << file << std::endl;
