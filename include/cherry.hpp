@@ -660,14 +660,33 @@ public:
 };
 
 
+/// Print args (at least one)
+template <typename Arg, typename... Args>
+[[maybe_unused]] void print_args(Arg arg, Args... args) {
+    std::cout << arg;
+    if constexpr (sizeof...(Args) > 0) {
+        std::cout << " ";
+        print_args(args...);
+    }
+}
+
+
 /// Debug print (file and line)
-[[maybe_unused]] void debug_print_impl(int line, const char *file) {
-    std::cout << ConsoleColor::green << "Debugging at line " << line << " in file " << file << ConsoleColor::reset << std::endl;
+template <typename... Args>
+[[maybe_unused]] void debug_print_impl(int line, const char *path, Args... args) {
+    std::cout << ConsoleColor::green;
+    std::cout << "[♫ Debug" << "#" << line << "@" << std::filesystem::path(path).filename().string() << "] " << ConsoleColor::reset;
+    if constexpr (sizeof...(Args) > 0) {
+        print_args(args...);
+    } else {
+        std::cout << "๑¯◡¯๑";
+    }
+    std::cout << std::endl;
 }
 
 
 /// Debug print (file and line, macro)
-#define debug_print() debug_print_impl(__LINE__, __FILE__)
+#define debug_print(...) debug_print_impl(__LINE__, __FILE__, ##__VA_ARGS__)
 
 
 /// An unimplemented error raiser

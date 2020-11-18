@@ -1,6 +1,5 @@
 #include <bitset>
 #include <cmath>
-#include <iostream>
 
 #include "cherry.hpp"
 #include "gtest/gtest.h"
