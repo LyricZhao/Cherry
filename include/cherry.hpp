@@ -319,7 +319,7 @@ private:
 public:
     // Check whether they're the same type
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
-                  "The types of two ranges in JoinedRange must be same");
+            "The types of two ranges in JoinedRange must be same");
 
     static constexpr bool be_const = std::is_const<Range1>::value or std::is_const<Range2>::value;
     typedef typename Range1::value_type value_type;
@@ -538,7 +538,7 @@ template <typename Range, typename Function>
 template <typename Range, typename Function>
 [[maybe_unused]] bool all_of(const Range &range, const Function &f) {
     static_assert(std::is_same<bool, decltype(f(*range.begin()))>::value,
-            "The return type of function f must be bool");
+                  "The return type of function f must be bool");
     for (const auto &item: range) { // NOLINT(readability-use-anyofallof)
         if (not f(item)) {
             return false;
@@ -628,14 +628,14 @@ template <typename T>
 
 
 /// Convert a size to `std::string` with units
-[[maybe_unused]] [[nodiscard]] std::string prettyBytes(size_t size) {
+[[maybe_unused]] [[nodiscard]] std::string pretty_bytes(size_t size) {
     static const char* units[5] = {"B", "KiB", "MiB", "GiB"};
     return pretty<size_t>(size, 1024, units, 4);
 }
 
 
 /// Convert a nanosecond to `std::string` with units (always millisecond if `fixed` is true)
-[[maybe_unused]] [[nodiscard]] std::string prettyNanoseconds(uint64_t duration, bool fixed=true) {
+[[maybe_unused]] [[nodiscard]] std::string pretty_nanoseconds(uint64_t duration, bool fixed= true) {
     // To millisecond
     if (fixed) {
         static char buffer[64];
