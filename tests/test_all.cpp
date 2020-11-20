@@ -300,6 +300,10 @@ TEST(Cherry, check_duplicate) {
     std::vector<int> vec = {1, 1, 2, 3, 4};
     ASSERT_EQ(check_duplicate(vec), true);
     ASSERT_EQ(check_duplicate(shift(vec, 1)), false);
+
+    // TODO: bug
+    // std::vector<int> vec2 = {1, 2, 3};
+    // ASSERT_EQ(check_duplicate(join(vec, vec2)), true);
 }
 
 
