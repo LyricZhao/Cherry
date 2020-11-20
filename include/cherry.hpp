@@ -61,7 +61,7 @@ public:
     }
 
     /// Generate a random number
-    [[maybe_unused]] value_type operator () () {
+    [[maybe_unused]] value_type operator ()() {
         return dist(engine);
     }
 };
@@ -235,20 +235,20 @@ public:
         [[maybe_unused]] Iterator(Array &items, const index_const_iterator_t &index_const_iterator):
                 items(items), index_const_iterator(index_const_iterator) {}
 
-        [[maybe_unused]] reference operator * () const {
+        [[maybe_unused]] reference operator *() const {
             return items[*index_const_iterator];
         }
 
-        [[maybe_unused]] Iterator operator ++ () {
+        [[maybe_unused]] Iterator operator ++() {
             index_const_iterator ++;
             return *this;
         }
 
-        [[maybe_unused]] bool operator == (const Iterator &other) const {
+        [[maybe_unused]] bool operator ==(const Iterator &other) const {
             return index_const_iterator == other.index_const_iterator;
         }
 
-        [[maybe_unused]] bool operator != (const Iterator &other) const {
+        [[maybe_unused]] bool operator !=(const Iterator &other) const {
             return index_const_iterator != other.index_const_iterator;
         }
     };
@@ -319,7 +319,7 @@ private:
 public:
     // Check whether they're the same type
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
-            "The types of two ranges in JoinedRange must be same");
+                  "The types of two ranges in JoinedRange must be same");
 
     static constexpr bool be_const = std::is_const<Range1>::value or std::is_const<Range2>::value;
     typedef typename Range1::value_type value_type;
@@ -341,11 +341,11 @@ public:
             first = iterator1 != iterator1_end;
         }
 
-        [[maybe_unused]] reference operator * () const {
+        [[maybe_unused]] reference operator *() const {
             return first ? *iterator1 : *iterator2;
         }
 
-        [[maybe_unused]] Iterator operator ++ () {
+        [[maybe_unused]] Iterator operator ++() {
             if (first) {
                 ++ iterator1;
                 if (iterator1 == iterator1_end) {
@@ -357,14 +357,14 @@ public:
             return *this;
         }
 
-        [[maybe_unused]] bool operator == (const Iterator &other) const {
+        [[maybe_unused]] bool operator ==(const Iterator &other) const {
             if (first != other.first) {
                 return false;
             }
             return first ? iterator1 == other.iterator1 : iterator2 == other.iterator2;
         }
 
-        [[maybe_unused]] bool operator != (const Iterator &other) const {
+        [[maybe_unused]] bool operator !=(const Iterator &other) const {
             if (first == other.first) {
                 return first ? iterator1 != other.iterator1 : iterator2 != other.iterator2;
             }
@@ -484,7 +484,7 @@ template <typename Range1, typename Range2>
 template <typename Range1, typename Range2, typename value_type = typename Range1::value_type>
 [[maybe_unused]] [[nodiscard]] std::vector<value_type> concat(const Range1 &range1, const Range2 &range2) {
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
-            "The types of two ranges in function concat must be same");
+                  "The types of two ranges in function concat must be same");
     std::vector<value_type> vec;
     for (const auto &value: range1) {
         vec.push_back(value);
