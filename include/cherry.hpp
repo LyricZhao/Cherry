@@ -773,7 +773,7 @@ private:
     int bits = 0, data_length = 0;
     data_t *data = nullptr;
     bool hash_calculated = false;
-    data_t hash_value = 0;
+    uint64_t hash_value = 0;
 
     [[maybe_unused]] void allocate() {
         data_length = bits;
@@ -846,12 +846,12 @@ public:
     }
 
     /// Get the hash value of the bitset
-    [[maybe_unused]] [[nodiscard]] data_t hash() {
+    [[maybe_unused]] [[nodiscard]] uint64_t hash() {
         if (not hash_calculated) {
             hash_calculated = true;
             hash_value = 0;
             for (int i = 0; i < data_length; ++ i) {
-                hash_value = hash_value * static_cast<data_t> (133) + data[i];
+                hash_value = hash_value * 133ull + data[i];
             }
         }
         return hash_value;
