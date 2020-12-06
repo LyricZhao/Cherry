@@ -701,6 +701,17 @@ template <typename... Args>
 #define unimplemented() unimplemented_impl(__LINE__, __FILE__)
 
 
+/// An unreachable error raiser
+[[maybe_unused]] void unreachable_impl(int line, const char *file) {
+    std::cerr << "Unreachable part at line " << line << " in file " << file << std::endl;
+    std::exit(EXIT_FAILURE);
+}
+
+
+/// An unreachable error raiser (macro)
+#define unreachable() unreachable_impl(__LINE__, __FILE__)
+
+
 /// Size and time units' helper
 class [[maybe_unused]] Unit {
 public:
