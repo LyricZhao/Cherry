@@ -7,6 +7,7 @@
 #include <ostream>
 #include <random>
 #include <set>
+#include <sstream>
 #include <string>
 #include <type_traits>
 
@@ -647,6 +648,21 @@ template <typename T>
     // Non-fixed
     static const char* units[5] = {"ns", "us", "ms", "s"};
     return pretty<uint64_t>(duration, 1000, units, 4);
+}
+
+
+/// Concat a range to `std::string`
+template <typename Range, typename value_type = typename Range::value_type>
+[[maybe_unused]] [[nodiscard]] std::string pretty_range(const Range &range) {
+    std::stringstream ss;
+    bool first = true;
+    ss << "[";
+    for (const auto &value: range) {
+        ss << (first ? "" : ", ") << value;
+        first = false;
+    }
+    ss << "]";
+    return ss.str();
 }
 
 

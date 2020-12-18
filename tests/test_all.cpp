@@ -338,3 +338,11 @@ TEST(Cherry, Bitset) {
     Bitset my_bitset_1024(1024);
     ASSERT_EQ(check(1024, std_bitset_1024, my_bitset_1024), true);
 }
+
+
+/// Check `pretty_range`
+TEST(Cherry, pretty_range) {
+    std::vector<int> vec = {0, 1, 2, 3, 4};
+    ASSERT_EQ(pretty_range(vec), "[0, 1, 2, 3, 4]");
+    ASSERT_EQ(pretty_range(reverse(vec)), "[4, 3, 2, 1, 0]");
+}
