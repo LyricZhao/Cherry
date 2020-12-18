@@ -51,7 +51,7 @@ private:
 
 public:
     /// The interval is closed ([`min`, `max`])
-    [[maybe_unused]] Random(value_type min, value_type max, int seed=0, bool pure=true) {
+    [[maybe_unused]] Random(value_type min, value_type max, int seed=0, bool pure=true) { // NOLINT(cert-msc51-cpp)
         assert(min <= max);
         if (pure) {
             seed = std::random_device()();
@@ -65,6 +65,8 @@ public:
         return dist(engine);
     }
 };
+
+[[maybe_unused]] Random<int> global_random_int(0, INT32_MAX, 0, false); // NOLINT(cert-err58-cpp)
 
 
 // TODO: Support enumerate with index
