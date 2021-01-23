@@ -730,6 +730,13 @@ template <typename... Args>
 #define unreachable() unreachable_impl(__LINE__, __FILE__)
 
 
+/// Numbers
+class [[maybe_unused]] Number {
+public:
+    [[maybe_unused]] static constexpr const double reasonable_infinity = 1e10;
+};
+
+
 /// Size and time units' helper
 class [[maybe_unused]] Unit {
 public:
