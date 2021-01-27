@@ -619,13 +619,13 @@ template <typename Range, typename value_type = typename Range::value_type>
 template <typename T>
 [[maybe_unused]] [[nodiscard]] std::string pretty(T value, T scale, const char* *units, int max_level) {
     int count = 0;
-    auto d = static_cast<double>(value);
+    auto d = std::abs(static_cast<double>(value));
     while (d > scale && count < max_level - 1) {
         d /= scale;
         count += 1;
     }
     static char buffer[64];
-    sprintf(buffer, "%.6f %s", d, units[count]);
+    sprintf(buffer, "%s%.6f %s", value < 0 ? "-" : "", d, units[count]);
     return buffer;
 }
 
@@ -634,6 +634,13 @@ template <typename T>
 [[maybe_unused]] [[nodiscard]] std::string pretty_bytes(size_t size) {
     static const char* units[5] = {"B", "KiB", "MiB", "GiB"};
     return pretty<size_t>(size, 1024, units, 4);
+}
+
+
+/// Convert a size to `std::string` with units
+[[maybe_unused]] [[nodiscard]] std::string pretty_bytes(long long size) {
+    static const char* units[5] = {"B", "KiB", "MiB", "GiB"};
+    return pretty<long long>(size, 1024, units, 4);
 }
 
 
