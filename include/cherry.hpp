@@ -52,7 +52,7 @@ private:
 
 public:
     /// The interval is closed ([`min`, `max`])
-    [[maybe_unused]] Random(value_type min, value_type max, int seed=0, bool pure=true) { // NOLINT(cert-msc51-cpp)
+    [[maybe_unused]] Random(value_type min, value_type max, unsigned int seed=0, bool pure=true) { // NOLINT(cert-msc51-cpp)
         assert(min <= max);
         if (pure) {
             seed = std::random_device()();
@@ -649,7 +649,7 @@ template <typename T>
     // To millisecond
     if (fixed) {
         static char buffer[64];
-        sprintf(buffer, "%.6f ms", duration / 1e6);
+        sprintf(buffer, "%.6f ms", static_cast<double>(duration) / 1e6);
         return buffer;
     }
     // Non-fixed
@@ -824,7 +824,7 @@ private:
         data_length += bits % width == 0 ? 0 : 1;
         assert(data_length > 0);
         assert(data == nullptr);
-        data = static_cast<data_t*> (std::malloc(data_length * width));
+        data = static_cast<data_t*>(std::malloc(data_length * width));
     }
 
 public:
@@ -837,7 +837,7 @@ public:
 
     [[maybe_unused]] Bitset(const Bitset &bitset) {
         bits = bitset.bits, data_length = bitset.data_length;
-        data = static_cast<data_t*> (std::malloc(data_length * width));
+        data = static_cast<data_t*>(std::malloc(data_length * width));
         std::memcpy(data, bitset.data, data_length * width);
         hash_calculated = bitset.hash_calculated;
         hash_value = bitset.hash_value;
@@ -874,9 +874,9 @@ public:
         assert(index >= 0 and index < bits);
         size_t i = index / width;
         size_t s = index % width;
-        data[i] |= static_cast<data_t> (1) << s;
-        data[i] ^= static_cast<data_t> (1) << s;
-        data[i] |= static_cast<data_t> (bit) << s;
+        data[i] |= static_cast<data_t>(1) << s;
+        data[i] ^= static_cast<data_t>(1) << s;
+        data[i] |= static_cast<data_t>(bit) << s;
         hash_calculated = false;
     }
 
@@ -885,7 +885,7 @@ public:
         assert(index >= 0 and index < bits);
         size_t i = index / width;
         size_t s = index % width;
-        return (data[i] >> s) & static_cast<data_t> (1);
+        return (data[i] >> s) & static_cast<data_t>(1);
     }
 
     /// Get the hash value of the bitset
