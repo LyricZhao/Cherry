@@ -737,6 +737,17 @@ template <typename... Args>
 #define unreachable() unreachable_impl(__LINE__, __FILE__)
 
 
+/// Early exit
+[[maybe_unused]] void early_exit(const std::string &info="", int exit_code=EXIT_FAILURE) {
+    if (exit_code == EXIT_SUCCESS) {
+        std::cout << info << std::endl;
+    } else {
+        std::cerr << info << std::endl;
+    }
+    std::exit(exit_code);
+}
+
+
 /// Numbers
 class [[maybe_unused]] Number {
 public:
