@@ -716,7 +716,7 @@ template <typename... Args>
 
 
 /// An unimplemented error raiser
-[[maybe_unused]] void unimplemented_impl(int line, const char *file) {
+[[noreturn]] [[maybe_unused]] void unimplemented_impl(int line, const char *file) {
     std::cerr << "Unimplemented part at line " << line << " in file " << file << std::endl;
     std::exit(EXIT_FAILURE);
 }
@@ -727,7 +727,7 @@ template <typename... Args>
 
 
 /// An unreachable error raiser
-[[maybe_unused]] void unreachable_impl(int line, const char *file) {
+[[noreturn]] [[maybe_unused]] void unreachable_impl(int line, const char *file) {
     std::cerr << "Unreachable part at line " << line << " in file " << file << std::endl;
     std::exit(EXIT_FAILURE);
 }
@@ -738,7 +738,7 @@ template <typename... Args>
 
 
 /// Early exit
-[[maybe_unused]] void early_exit(const std::string &info="", int exit_code=EXIT_FAILURE) {
+[[noreturn]] [[maybe_unused]] void early_exit(const std::string &info="", int exit_code=EXIT_FAILURE) {
     if (exit_code == EXIT_SUCCESS) {
         std::cout << info << std::endl;
     } else {
