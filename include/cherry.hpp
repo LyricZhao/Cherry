@@ -1,3 +1,8 @@
+/*
+ * Cherry: a header-only C++ utility extension library
+ */
+
+
 #pragma once
 
 #include <cassert>
