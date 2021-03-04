@@ -19,7 +19,7 @@ TEST(Cherry, gtest) {
 /// Test `Timer`
 TEST(Cherry, NanoTimer) {
     // Use two timer to check whether the intervals are similar
-    NanoTimer timer, wall_timer;
+    cherry::NanoTimer timer, wall_timer;
     uint64_t total_time = 0;
     for (int i = 0; i < 1000; ++ i) {
         total_time += timer.tik();
@@ -32,21 +32,21 @@ TEST(Cherry, NanoTimer) {
 /// Test `Random`
 TEST(Cherry, Random) {
     // Random integer
-    auto random_int = Random(10, 100);
+    auto random_int = cherry::Random(10, 100);
     for (int i = 0; i < 100; ++ i) {
         ASSERT_GE(random_int(), 10);
         ASSERT_LE(random_int(), 100);
     }
 
     // Random real number
-    auto random_double = Random<double>(0.0, 10.0);
+    auto random_double = cherry::Random<double>(0.0, 10.0);
     for (int i = 0; i < 100; ++ i) {
         ASSERT_GE(random_double(), 0.0);
         ASSERT_LE(random_double(), 10.0);
     }
 
     // Global random
-    int a = global_random_int(), b = global_random_int();
+    int a = cherry::global_random_int(), b = cherry::global_random_int();
     ASSERT_NE(a, b);
 }
 
@@ -56,33 +56,33 @@ TEST(Cherry, ShiftRange) {
     // Shift a vector and change value
     int count = 0;
     std::vector<int> vec(10, 0);
-    for (auto &value: shift(vec, 5)) {
+    for (auto &value: cherry::shift(vec, 5)) {
         value = 1;
         ++ count;
     }
     ASSERT_EQ(count, 5);
 
     // Check value
-    for (auto &value: shift(vec, 0, 5)) {
+    for (auto &value: cherry::shift(vec, 0, 5)) {
         ASSERT_EQ(value, 0);
     }
-    for (auto &value: shift(vec, 5)) {
+    for (auto &value: cherry::shift(vec, 5)) {
         ASSERT_EQ(value, 1);
     }
 
     // `const_iterator`
-    for (const auto &value: shift(vec, 0, 5)) {
+    for (const auto &value: cherry::shift(vec, 0, 5)) {
         ASSERT_EQ(value, 0);
     }
 
     // `const Range &`
     const std::vector<int> const_vec(10, 0);
-    for (const auto &value: shift(const_vec, 0, 5)) {
+    for (const auto &value: cherry::shift(const_vec, 0, 5)) {
         ASSERT_EQ(value, 0);
     }
 
     // R-value
-    for (const auto &value: shift(shift(vec, 0, 4), 0, 2)) {
+    for (const auto &value: shift(cherry::shift(vec, 0, 4), 0, 2)) {
         ASSERT_EQ(value, 0);
     }
 }
@@ -96,23 +96,23 @@ TEST(Cherry, ReversedRange) {
     for (auto &value: vec) {
         value = index ++;
     }
-    for (const auto &value: reverse(vec)) {
+    for (const auto &value: cherry::reverse(vec)) {
         ASSERT_EQ(value, -- index);
     }
 
     // Combine with `ShiftRange`
     index = 10;
-    for (auto &value: reverse(shift(vec, 5))) {
+    for (auto &value: reverse(cherry::shift(vec, 5))) {
         ASSERT_EQ(value, -- index);
         value = 0;
     }
-    for (auto &value: shift(reverse(vec), 0, 5)) {
+    for (auto &value: cherry::shift(cherry::reverse(vec), 0, 5)) {
         ASSERT_EQ(value, 0);
     }
 
     // `const Range &`
     const std::vector<int> const_vec(10, 0);
-    for (const auto &value: reverse(const_vec)) {
+    for (const auto &value: cherry::reverse(const_vec)) {
         ASSERT_EQ(value, 0);
     }
 }
@@ -131,22 +131,22 @@ TEST(Cherry, IndexingRange) {
         value = index ++;
     }
     index = 5;
-    for (auto &value: indexing(values, indexes)) {
+    for (auto &value: cherry::indexing(values, indexes)) {
         ASSERT_EQ(value, -- index);
     }
 
     // Combine with `ReversedRange`
-    for (auto &value: reverse(indexing(values, indexes))) {
+    for (auto &value: cherry::reverse(cherry::indexing(values, indexes))) {
         ASSERT_EQ(value, index ++);
         value = 0;
     }
-    for (auto &value: reverse(indexing(values, indexes))) {
+    for (auto &value: cherry::reverse(cherry::indexing(values, indexes))) {
         ASSERT_EQ(value, 0);
     }
 
     // `const Range &`
     std::vector<int> const_vec(10, 0);
-    for (const auto &value: reverse(indexing(const_vec, indexes))) {
+    for (const auto &value: cherry::reverse(cherry::indexing(const_vec, indexes))) {
         ASSERT_EQ(value, 0);
     }
 }
@@ -157,7 +157,7 @@ TEST(Cherry, JoinedIterator) {
     // Assign and check values
     std::vector<int> vec1(10, 0), vec2(10, 1);
     int index = 0;
-    for (auto &value: join(vec1, vec2)) {
+    for (auto &value: cherry::join(vec1, vec2)) {
         if (index < 10) {
             ASSERT_EQ(value, 0);
         } else {
@@ -166,13 +166,13 @@ TEST(Cherry, JoinedIterator) {
         value = 2;
         index ++;
     }
-    for (auto &value: join(vec1, vec2)) {
+    for (auto &value: cherry::join(vec1, vec2)) {
         ASSERT_EQ(value, 2);
     }
 
     // Join and join
     std::vector<int> vec3(10, 0);
-    for (auto &value: join(join(vec1, vec2), vec3)) {
+    for (auto &value: cherry::join(cherry::join(vec1, vec2), vec3)) {
         value = 3;
     }
     auto check = [](const std::vector<int> &vec) {
@@ -186,7 +186,7 @@ TEST(Cherry, JoinedIterator) {
 
     // Combine with `ReversedRange`
     index = 0;
-    for (auto &value: join(join(vec1, reverse(vec2)), vec3)) {
+    for (auto &value: cherry::join(cherry::join(vec1, cherry::reverse(vec2)), vec3)) {
         value = index ++;
     }
     index = 20;
@@ -197,7 +197,7 @@ TEST(Cherry, JoinedIterator) {
     // `const Range &`
     std::vector<int> non_const_vec(10, 0);
     const std::vector<int> const_vec(10, 0);
-    for (const auto &value: join(non_const_vec, join(non_const_vec, const_vec))) {
+    for (const auto &value: cherry::join(non_const_vec, cherry::join(non_const_vec, const_vec))) {
         ASSERT_EQ(value, 0);
     }
 }
@@ -209,7 +209,7 @@ TEST(Cherry, map) {
         int a = 0, b = 0;
     };
     std::vector<Item> items(10);
-    auto mapped = map(items, [](const Item &item) -> int {
+    auto mapped = cherry::map(items, [](const Item &item) -> int {
         return item.a;
     });
     for (const auto &value: mapped) {
@@ -223,7 +223,7 @@ TEST(Cherry, for_each) {
     // Test non-const
     int index = 0;
     std::vector<int> vec = {0, 1, 2, 3, 4};
-    for_each(reverse(vec), [&index](int &item) {
+    cherry::for_each(cherry::reverse(vec), [&index](int &item) {
         item = index ++;
     });
     for (const auto &item: vec) {
@@ -233,7 +233,7 @@ TEST(Cherry, for_each) {
     // Test const
     const std::vector<int> const_vec = vec;
     std::vector<int> vec2;
-    for_each(const_vec, [&vec2](const int &item) {
+    cherry::for_each(const_vec, [&vec2](const int &item) {
         vec2.push_back(item);
     });
     ASSERT_EQ(vec2.size(), 5);
@@ -249,8 +249,8 @@ TEST(Cherry, all_of) {
     auto check2 = [](const int &item) -> bool {
         return item < 4;
     };
-    ASSERT_EQ(all_of(vec, check1), true);
-    ASSERT_EQ(all_of(vec, check2), false);
+    ASSERT_EQ(cherry::all_of(vec, check1), true);
+    ASSERT_EQ(cherry::all_of(vec, check2), false);
 }
 
 
@@ -263,8 +263,8 @@ TEST(Cherry, none_of) {
     auto check2 = [](const int &item) -> bool {
         return item >= 4;
     };
-    ASSERT_EQ(none_of(vec, check1), true);
-    ASSERT_EQ(none_of(vec, check2), false);
+    ASSERT_EQ(cherry::none_of(vec, check1), true);
+    ASSERT_EQ(cherry::none_of(vec, check2), false);
 }
 
 
@@ -277,33 +277,33 @@ TEST(Cherry, any_of) {
     auto check2 = [](const int &item) -> bool {
         return item == 5;
     };
-    ASSERT_EQ(any_of(vec, check1), true);
-    ASSERT_EQ(any_of(vec, check2), false);
+    ASSERT_EQ(cherry::any_of(vec, check1), true);
+    ASSERT_EQ(cherry::any_of(vec, check2), false);
 }
 
 
 /// Test `find`
 TEST(Cherry, find) {
     std::vector<int> vec = {0, 1, 2, 3, 4};
-    ASSERT_EQ(find(vec, 0), true);
-    ASSERT_EQ(find(shift(vec, 1), 0), false);
-    ASSERT_EQ(find(shift(vec, 1), 4), true);
-    ASSERT_EQ(find(shift(vec, 1, 2), 4), false);
+    ASSERT_EQ(cherry::find(vec, 0), true);
+    ASSERT_EQ(cherry::find(cherry::shift(vec, 1), 0), false);
+    ASSERT_EQ(cherry::find(cherry::shift(vec, 1), 4), true);
+    ASSERT_EQ(cherry::find(cherry::shift(vec, 1, 2), 4), false);
 }
 
 
 /// Check `sum`
 TEST(Cherry, sum) {
     std::vector<int> vec = {0, 1, 2, 3, 4};
-    ASSERT_EQ(sum(vec), 10);
+    ASSERT_EQ(cherry::sum(vec), 10);
 }
 
 
 /// Check `check_duplicate`
 TEST(Cherry, check_duplicate) {
     std::vector<int> vec = {1, 1, 2, 3, 4};
-    ASSERT_EQ(check_duplicate(vec), true);
-    ASSERT_EQ(check_duplicate(shift(vec, 1)), false);
+    ASSERT_EQ(cherry::check_duplicate(vec), true);
+    ASSERT_EQ(cherry::check_duplicate(cherry::shift(vec, 1)), false);
 
     // TODO: bug
     // std::vector<int> vec2 = {1, 2, 3};
@@ -314,8 +314,8 @@ TEST(Cherry, check_duplicate) {
 /// Check `Bitset`
 TEST(Cherry, Bitset) {
     auto check = [](int length, auto &std_bitset, auto &my_bitset) -> bool {
-        Random<int> random(0, length - 1);
-        Random<bool> random_bool(false, true);
+        cherry::Random<int> random(0, length - 1);
+        cherry::Random<bool> random_bool(false, true);
         for (int i = 0; i < 10; ++ i) {
             int k = random();
             bool value = random_bool();
@@ -331,11 +331,11 @@ TEST(Cherry, Bitset) {
     };
 
     std::bitset<3> std_bitset_3;
-    Bitset my_bitset_3(3);
+    cherry::Bitset my_bitset_3(3);
     ASSERT_EQ(check(3, std_bitset_3, my_bitset_3), true);
 
     std::bitset<1024> std_bitset_1024;
-    Bitset my_bitset_1024(1024);
+    cherry::Bitset my_bitset_1024(1024);
     ASSERT_EQ(check(1024, std_bitset_1024, my_bitset_1024), true);
 }
 
@@ -343,6 +343,6 @@ TEST(Cherry, Bitset) {
 /// Check `pretty_range`
 TEST(Cherry, pretty_range) {
     std::vector<int> vec = {0, 1, 2, 3, 4};
-    ASSERT_EQ(pretty_range(vec), "[0, 1, 2, 3, 4]");
-    ASSERT_EQ(pretty_range(reverse(vec)), "[4, 3, 2, 1, 0]");
+    ASSERT_EQ(cherry::pretty_range(vec), "[0, 1, 2, 3, 4]");
+    ASSERT_EQ(cherry::pretty_range(cherry::reverse(vec)), "[4, 3, 2, 1, 0]");
 }
