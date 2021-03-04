@@ -1,9 +1,10 @@
 #pragma once
 
+#include <cassert>
 #include <cctype>
+#include <cstring>
 #include <chrono>
 #include <iostream>
-#include <filesystem>
 #include <ostream>
 #include <random>
 #include <set>
@@ -702,7 +703,7 @@ namespace cherry {
     template <typename... Args>
     [[maybe_unused]] void debug_print_impl(int line, const char *path, Args... args) {
         std::cout << ConsoleColor::green;
-        std::cout << "[♫ Debug" << "#" << line << "@" << std::filesystem::path(path).filename().string() << "] " << ConsoleColor::reset;
+        std::cout << "[♫ Debug" << "#" << line << "@" << path << "] " << ConsoleColor::reset;
         if constexpr (sizeof...(Args) > 0) {
             print_args(args...);
         } else {
@@ -850,7 +851,7 @@ namespace cherry {
         [[maybe_unused]] Bitset(const Bitset &bitset) {
             bits = bitset.bits, data_length = bitset.data_length;
             data = static_cast<data_t*>(std::malloc(data_length * width));
-            std::memcpy(data, bitset.data, data_length * width);
+            memcpy(data, bitset.data, data_length * width);
             hash_calculated = bitset.hash_calculated;
             hash_value = bitset.hash_value;
         }
@@ -870,7 +871,7 @@ namespace cherry {
 
         /// Clear all the bits
         [[maybe_unused]] void clear() {
-            std::memset(data, 0, data_length * width);
+            memset(data, 0, data_length * width);
         }
 
         /// Check whether all the bits at indexes are 1
