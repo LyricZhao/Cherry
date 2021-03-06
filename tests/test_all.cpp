@@ -44,10 +44,6 @@ TEST(Cherry, Random) {
         ASSERT_GE(random_double(), 0.0);
         ASSERT_LE(random_double(), 10.0);
     }
-
-    // Global random
-    int a = cherry::global_random_int(), b = cherry::global_random_int();
-    ASSERT_NE(a, b);
 }
 
 

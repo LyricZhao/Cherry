@@ -38,7 +38,7 @@ namespace cherry {
         }
 
         /// Return the duration from last time point (constructor `Timer()` or `tik()`)
-        [[maybe_unused]] uint64_t tik() {
+        [[maybe_unused]] inline uint64_t tik() {
             time_point_t time_point = std::chrono::system_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time_point - last_time_point);
             last_time_point = time_point;
@@ -74,8 +74,6 @@ namespace cherry {
         }
     };
 
-    [[maybe_unused]] Random<int> global_random_int(0, INT32_MAX, 0, false); // NOLINT(cert-err58-cpp)
-
 
     // TODO: Support enumerate with index
     // NOTE: The compiler error may not be friendly when use `iterator` as `const_iterator` by force
@@ -95,7 +93,7 @@ namespace cherry {
                 typename Range::const_reverse_iterator, typename Range::reverse_iterator>::type reverse_iterator;
         typedef typename Range::const_iterator const_iterator;
         typedef typename Range::const_reverse_iterator const_reverse_iterator;
-        typedef typename Range::value_type value_type;
+        [[maybe_unused]] typedef typename Range::value_type value_type;
 
         explicit ShiftRange(Range &range, int pos=0, int length=-1): range(range), pos(pos) {
             this->length = length == -1 ? range.end() - range.begin() - pos : length;
@@ -165,7 +163,7 @@ namespace cherry {
         typedef typename std::conditional<std::is_const<Range>::value, typename Range::const_iterator, typename Range::iterator>::type reverse_iterator;
         typedef typename Range::const_reverse_iterator const_iterator;
         typedef typename Range::const_iterator const_reverse_iterator;
-        typedef typename Range::value_type value_type;
+        [[maybe_unused]] typedef typename Range::value_type value_type;
 
         explicit ReversedRange(Range &range): range(range) {}
 
@@ -232,7 +230,7 @@ namespace cherry {
         const Range &indexes;
 
     public:
-        typedef typename Array::value_type value_type;
+        [[maybe_unused]] typedef typename Array::value_type value_type;
         typedef typename std::conditional<std::is_const<Array>::value,
                 const typename Array::value_type&, typename Array::value_type&>::type reference;
 
@@ -332,7 +330,7 @@ namespace cherry {
                       "The types of two ranges in JoinedRange must be same");
 
         static constexpr bool be_const = std::is_const<Range1>::value or std::is_const<Range2>::value;
-        typedef typename Range1::value_type value_type;
+        [[maybe_unused]] typedef typename Range1::value_type value_type;
         typedef typename std::conditional<be_const,
                 const typename Range1::value_type&, typename Range1::value_type&>::type reference;
 
@@ -638,21 +636,21 @@ namespace cherry {
 
 
     /// Convert a size to `std::string` with units
-    [[maybe_unused]] [[nodiscard]] std::string pretty_bytes(size_t size) {
+    [[maybe_unused]] [[nodiscard]] static std::string pretty_bytes(size_t size) {
         static const char* units[5] = {"B", "KiB", "MiB", "GiB"};
         return pretty<size_t>(size, 1024, units, 4);
     }
 
 
     /// Convert a size to `std::string` with units
-    [[maybe_unused]] [[nodiscard]] std::string pretty_bytes(long long size) {
+    [[maybe_unused]] [[nodiscard]] static std::string pretty_bytes(long long size) {
         static const char* units[5] = {"B", "KiB", "MiB", "GiB"};
         return pretty<long long>(size, 1024, units, 4);
     }
 
 
     /// Convert a nanosecond to `std::string` with units (always millisecond if `fixed` is true)
-    [[maybe_unused]] [[nodiscard]] std::string pretty_nanoseconds(uint64_t duration, bool fixed= true) {
+    [[maybe_unused]] [[nodiscard]] static std::string pretty_nanoseconds(uint64_t duration, bool fixed= true) {
         // To millisecond
         if (fixed) {
             static char buffer[64];
@@ -666,7 +664,7 @@ namespace cherry {
 
 
     /// Concat a range to `std::string`
-    template <typename Range, typename value_type = typename Range::value_type>
+    template <typename Range>
     [[maybe_unused]] [[nodiscard]] std::string pretty_range(const Range &range) {
         std::stringstream ss;
         bool first = true;
@@ -723,7 +721,7 @@ namespace cherry {
 
 
     /// An unimplemented error raiser
-    [[noreturn]] [[maybe_unused]] void unimplemented_impl(int line, const char *file) {
+    [[noreturn]] [[maybe_unused]] static void unimplemented_impl(int line, const char *file) {
         std::cerr << "Unimplemented part at line " << line << " in file " << file << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -734,7 +732,7 @@ namespace cherry {
 
 
     /// An unreachable error raiser
-    [[noreturn]] [[maybe_unused]] void unreachable_impl(int line, const char *file) {
+    [[noreturn]] [[maybe_unused]] static void unreachable_impl(int line, const char *file) {
         std::cerr << "Unreachable part at line " << line << " in file " << file << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -745,7 +743,7 @@ namespace cherry {
 
 
     /// Early exit
-    [[noreturn]] [[maybe_unused]] void early_exit(const std::string &info="", int exit_code=EXIT_FAILURE) {
+    [[noreturn]] [[maybe_unused]] static void early_exit(const std::string &info="", int exit_code=EXIT_FAILURE) {
         if (exit_code == EXIT_SUCCESS) {
             std::cout << info << std::endl;
         } else {
