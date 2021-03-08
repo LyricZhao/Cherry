@@ -717,7 +717,7 @@ namespace cherry {
 
 
     /// Debug print (file and line, macro)
-#define debug_print(...) debug_print_impl(__LINE__, __FILE__, ##__VA_ARGS__)
+#define debug_print(...) cherry::debug_print_impl(__LINE__, __FILE__, ##__VA_ARGS__)
 
 
     /// An unimplemented error raiser
@@ -728,7 +728,7 @@ namespace cherry {
 
 
     /// An unimplemented error raiser (macro)
-#define unimplemented() unimplemented_impl(__LINE__, __FILE__)
+#define unimplemented() cherry::unimplemented_impl(__LINE__, __FILE__)
 
 
     /// An unreachable error raiser
@@ -739,7 +739,7 @@ namespace cherry {
 
 
     /// An unreachable error raiser (macro)
-#define unreachable() unreachable_impl(__LINE__, __FILE__)
+#define unreachable() cherry::unreachable_impl(__LINE__, __FILE__)
 
 
     /// Early exit
