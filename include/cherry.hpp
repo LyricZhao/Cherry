@@ -59,7 +59,7 @@ namespace cherry {
 
     public:
         /// The interval is closed ([`min`, `max`])
-        [[maybe_unused]] Random(value_type min, value_type max, unsigned int seed=0, bool pure=true) { // NOLINT(cert-msc51-cpp)
+        [[maybe_unused]] Random(value_type min, value_type max, bool pure=true, unsigned int seed=0) { // NOLINT(cert-msc51-cpp)
             assert(min <= max);
             if (pure) {
                 seed = std::random_device()();
