@@ -4,17 +4,14 @@
 #include "cherry.hpp"
 #include "gtest/gtest.h"
 
-
 // Ignore a Clang-Tidy warning from GoogleTest's `TEST` macro
 #pragma ide diagnostic ignored "cert-err58-cpp"
-
 
 /// Test whether GoogleTest works
 TEST(Cherry, gtest) {
     int a = 1, b = 2;
     ASSERT_EQ(a + b, 3);
 }
-
 
 /// Test `Timer`
 TEST(Cherry, NanoTimer) {
@@ -27,7 +24,6 @@ TEST(Cherry, NanoTimer) {
     ASSERT_GT(total_time, 0);
     ASSERT_NEAR(total_time, wall_timer.tik(), total_time * 0.2);
 }
-
 
 /// Test `Random`
 TEST(Cherry, Random) {
@@ -45,7 +41,6 @@ TEST(Cherry, Random) {
         ASSERT_LE(random_double(), 10.0);
     }
 }
-
 
 /// Test `Random`
 TEST(Cherry, ShiftRange) {
@@ -83,7 +78,6 @@ TEST(Cherry, ShiftRange) {
     }
 }
 
-
 /// Test `ReversedRange`
 TEST(Cherry, ReversedRange) {
     // Assign and check values
@@ -112,7 +106,6 @@ TEST(Cherry, ReversedRange) {
         ASSERT_EQ(value, 0);
     }
 }
-
 
 /// Test `IndexingRange`
 TEST(Cherry, IndexingRange) {
@@ -146,7 +139,6 @@ TEST(Cherry, IndexingRange) {
         ASSERT_EQ(value, 0);
     }
 }
-
 
 /// Test `JoinedIterator`
 TEST(Cherry, JoinedIterator) {
@@ -198,7 +190,6 @@ TEST(Cherry, JoinedIterator) {
     }
 }
 
-
 /// Test `map`
 TEST(Cherry, map) {
     struct Item {
@@ -212,7 +203,6 @@ TEST(Cherry, map) {
         ASSERT_EQ(value, 0);
     }
 }
-
 
 /// Test `for_each`
 TEST(Cherry, for_each) {
@@ -235,7 +225,6 @@ TEST(Cherry, for_each) {
     ASSERT_EQ(vec2.size(), 5);
 }
 
-
 /// Test `all_of`
 TEST(Cherry, all_of) {
     std::vector<int> vec = {0, 1, 2, 3, 4};
@@ -248,7 +237,6 @@ TEST(Cherry, all_of) {
     ASSERT_EQ(cherry::all_of(vec, check1), true);
     ASSERT_EQ(cherry::all_of(vec, check2), false);
 }
-
 
 /// Test `none_of`
 TEST(Cherry, none_of) {
@@ -263,7 +251,6 @@ TEST(Cherry, none_of) {
     ASSERT_EQ(cherry::none_of(vec, check2), false);
 }
 
-
 /// Test `any_of`
 TEST(Cherry, any_of) {
     std::vector<int> vec = {0, 1, 2, 3, 4};
@@ -277,7 +264,6 @@ TEST(Cherry, any_of) {
     ASSERT_EQ(cherry::any_of(vec, check2), false);
 }
 
-
 /// Test `find`
 TEST(Cherry, find) {
     std::vector<int> vec = {0, 1, 2, 3, 4};
@@ -287,13 +273,11 @@ TEST(Cherry, find) {
     ASSERT_EQ(cherry::find(cherry::shift(vec, 1, 2), 4), false);
 }
 
-
 /// Check `sum`
 TEST(Cherry, sum) {
     std::vector<int> vec = {0, 1, 2, 3, 4};
     ASSERT_EQ(cherry::sum(vec), 10);
 }
-
 
 /// Check `check_duplicate`
 TEST(Cherry, check_duplicate) {
@@ -306,6 +290,14 @@ TEST(Cherry, check_duplicate) {
     // ASSERT_EQ(check_duplicate(join(vec, vec2)), true);
 }
 
+/// Check `push`
+TEST(Cherry, push) {
+    std::vector<int> vec;
+    cherry::push(vec, 2, 3);
+    ASSERT_EQ(vec.size(), 2);
+    ASSERT_EQ(vec[0], 2);
+    ASSERT_EQ(vec[1], 3);
+}
 
 /// Check `Bitset`
 TEST(Cherry, Bitset) {
@@ -334,7 +326,6 @@ TEST(Cherry, Bitset) {
     cherry::Bitset my_bitset_1024(1024);
     ASSERT_EQ(check(1024, std_bitset_1024, my_bitset_1024), true);
 }
-
 
 /// Check `pretty_range`
 TEST(Cherry, pretty_range) {

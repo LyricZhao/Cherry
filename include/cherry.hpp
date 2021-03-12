@@ -584,6 +584,19 @@ template <typename Range, typename value_type = typename Range::value_type>
     return set.size() != size;
 }
 
+/// Push all args into a vector
+template <typename value_type>
+[[maybe_unused]] static inline void push(std::vector<value_type> &vec, const value_type &v) {
+    vec.push_back(v);
+}
+
+/// Push all args into a vector
+template <typename value_type, typename ...Args>
+[[maybe_unused]] static inline void push(std::vector<value_type> &vec, const value_type &v, Args... args) {
+    vec.push_back(v);
+    push(vec, args...);
+}
+
 /// Convert a number to `std::string` with units
 template <typename T>
 [[maybe_unused]] [[nodiscard]] std::string pretty(T value, T scale, const char* *units, int max_level) {
