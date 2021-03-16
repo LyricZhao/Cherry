@@ -786,6 +786,15 @@ public:
     }
 };
 
+// Reverse bytes for int value
+static inline int reverse_bytes(int value) {
+    auto unsigned_value = static_cast<uint32_t>(value);
+    return static_cast<int>((((unsigned_value & 0x000000ffu) << 24u) |
+                             ((unsigned_value & 0x0000ff00u) << 8u)  |
+                             ((unsigned_value & 0x00ff0000u) >> 8u)  |
+                             ((unsigned_value & 0xff000000u) >> 24u)));
+}
+
 /// Dynamic bitset
 class [[maybe_unused]] Bitset {
 private:

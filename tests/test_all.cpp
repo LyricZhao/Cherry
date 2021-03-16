@@ -299,6 +299,12 @@ TEST(Cherry, push) {
     ASSERT_EQ(vec[1], 3);
 }
 
+/// Check `reverse_bytes`
+TEST(Cherry, reverse_bytes) {
+    ASSERT_EQ(cherry::reverse_bytes(0x000000ff), 0xff000000);
+    ASSERT_EQ(cherry::reverse_bytes(0x12345678), 0x78563412);
+}
+
 /// Check `Bitset`
 TEST(Cherry, Bitset) {
     auto check = [](int length, auto &std_bitset, auto &my_bitset) -> bool {
