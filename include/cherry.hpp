@@ -312,7 +312,7 @@ private:
 public:
     // Check whether they're the same type
     static_assert(std::is_same<typename Range1::value_type, typename Range2::value_type>::value,
-                  "The types of two ranges in JoinedRange must be same");
+    "The types of two ranges in JoinedRange must be same");
 
     static constexpr bool be_const = std::is_const<Range1>::value or std::is_const<Range2>::value;
     [[maybe_unused]] typedef typename Range1::value_type value_type;
@@ -607,7 +607,7 @@ template <typename T>
         count += 1;
     }
     static char buffer[64];
-    sprintf(buffer, "%s%.6f %s", value < 0 ? "-" : "", d, units[count]);
+    sprintf(buffer, "%s%.3f %s", value < 0 ? "-" : "", d, units[count]);
     return buffer;
 }
 
@@ -623,12 +623,22 @@ template <typename T>
     return pretty<long long>(size, 1024, units, 4);
 }
 
+/// Variance between two variables
+template <typename T>
+[[maybe_unused]] [[nodiscard]] static std::string pretty_variance(T before, T after) {
+    auto before_d = static_cast<double>(before);
+    auto after_d = static_cast<double>(after);
+    static char buffer[256];
+    sprintf(buffer, "%.2lf%%", (after_d - before_d) / (before_d) * 100);
+    return (after_d >= before_d ? "+" : "") + std::string(buffer);
+}
+
 /// Convert a nanosecond to `std::string` with units (always millisecond if `fixed` is true)
 [[maybe_unused]] [[nodiscard]] static std::string pretty_nanoseconds(uint64_t duration, bool fixed= true) {
     // To millisecond
     if (fixed) {
         static char buffer[64];
-        sprintf(buffer, "%.6f ms", static_cast<double>(duration) / 1e6);
+        sprintf(buffer, "%.3f ms", static_cast<double>(duration) / 1e6);
         return buffer;
     }
     // Non-fixed
@@ -721,6 +731,21 @@ class [[maybe_unused]] Number {
 public:
     [[maybe_unused]] static constexpr const double reasonable_infinity = 1e10;
 };
+
+/// Return the lowbit of `x`
+static inline int lowbit(int x) {
+    return x & (-x);
+}
+
+/// Log2 of integer
+static inline int log2(int x) {
+    assert(lowbit(x) == x);
+    int k = 0;
+    while ((1 << k) != x) {
+        ++ k;
+    }
+    return k;
+}
 
 /// Size and time units' helper
 class [[maybe_unused]] Unit {
