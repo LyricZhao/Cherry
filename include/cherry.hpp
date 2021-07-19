@@ -660,6 +660,14 @@ template <typename Range>
     return ss.str();
 }
 
+/// Show progress status
+template <typename FuncType>
+[[maybe_unused]] void pretty_progress(FuncType func, const std::string& info, const std::string& notice="OK!") {
+    std::cout << info << " ... " << std::flush;
+    func();
+    std::cout << notice << std::endl;
+}
+
 /// Console colors
 class [[maybe_unused]] ConsoleColor {
 public:
@@ -715,6 +723,21 @@ template <typename... Args>
 
 /// An unreachable error raiser (macro)
 #define unreachable() cherry::unreachable_impl(__LINE__, __FILE__)
+
+/// Do nothing
+static inline void do_nothing() {
+    // Do nothing
+}
+
+/// Disable display
+static inline void disable_display(std::ostream& os=std::cout) {
+    os.setstate(std::ios::failbit);
+}
+
+/// Restore display
+static inline void restore_display(std::ostream& os=std::cout) {
+    os.clear();
+}
 
 /// Early exit
 [[noreturn]] [[maybe_unused]] static void early_exit(const std::string &info="", int exit_code=EXIT_FAILURE) {
